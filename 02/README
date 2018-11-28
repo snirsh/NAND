@@ -1,0 +1,24 @@
+snirsh
+===============================================================================
+Snir Sharristh, ID 305500001, snir.sharristh@cs.huji.ac.il
+===============================================================================
+
+                           Project 2 - Combinational Chips
+                           -------------------------------
+  
+
+Submitted Files
+---------------
+README - This file.
+ALU.hdl 
+Add16.hdl
+FullAdder.hdl
+HalfAdder.hdl
+Inc16.hdl 
+ShiftLeft.hdl 
+ShiftRight.hdl 
+Mul.hdl
+
+Remarks
+-------
+*nothing special

@@ -1,0 +1,71 @@
+/**
+* This chip is an extension of the book CPU by using the extended ALU.
+* More specificly if instruction[15]==0 or (instruction[14] and instruction[13] equals 1)
+* the CpuMul behave exactly as the book CPU.
+* While if it is C instruction and instruction[13] == 0 the output will be D*A/M 
+* (according to instruction[12]).
+* Moreover, if it is c instruction and instruction[14] == 0 it will behave as follows:
+*
+* instruction:  | 12 | 11 | 10 |
+* _____________________________
+* shift left D  | 0  | 1  | 1  |
+* shift left A  | 0  | 1  | 0  |
+* shift left M  | 1  | 1  | 0  |
+* shift right D | 0  | 0  | 1  |
+* shift right A | 0  | 0  | 0  |
+* shift right M | 1  | 0  | 0  |
+**/
+
+CHIP CpuMul{
+
+    IN  inM[16],         // M value input  (M = contents of RAM[A])
+        instruction[16], // Instruction for execution
+        reset;           // Signals whether to re-start the current
+                         // program (reset=1) or continue executing
+                         // the current program (reset=0).
+
+    OUT outM[16],        // M value output
+        writeM,          // Write into M? 
+        addressM[15],    // Address in data memory (of M)
+        pc[15];          // address of next instruction
+
+    PARTS:
+	// A-Register
+	Not(in=instruction[15],out=nInst);
+	Mux16(a=instruction,b=ALUOUT,sel=instruction[15],out=inA);
+	And(a=instruction[15],b=instruction[5],out=InsLoad);	
+	Or(a=InsLoad,b=nInst,out=LoadA);
+	ARegister(in=inA,load=LoadA,out[0..14]=addressM,out=AregOut);
+	// here we ended with the first mux and assumably load the second mux which is before the ALU
+	And(a=instruction[14],b=instruction[13],out=InsLoad2);
+	Or(a=InsLoad2,b=nInst,out=Ins8out);
+	Mux(a=true,b=instruction[13],sel=instruction[15],out=Ins7out);
+	Mux16(a=AregOut,b=inM,sel=instruction[12],out=MUXALUIn);
+	//Loading the ExtendAlu
+	ExtendAlu(x=DregOut,y=MUXALUIn,instruction[8]=Ins8out,instruction[7]=Ins7out,instruction[6]=false,instruction[0..5]=instruction[6..11],out=ALUOUT,out=outM,zr=zrALU,ng=ngALU);
+	// this is the DRegister loading
+	And(a=instruction[15],b=instruction[4],out=LoadD);
+	DRegister(in=ALUOUT,load=LoadD,out=DregOut);
+	// writeM
+	And(a=instruction[15],b=instruction[3],out=writeM);
+	// initializing negetaion
+	Not(in=ngALU,out=pos);
+	Not(in=zrALU,out=notzr);
+	Not(in=instruction[0],out=nj3);
+	Not(in=instruction[1],out=nj2);
+	Not(in=instruction[2],out=nj1);
+	And(a=btz,b=instruction[0],out=JGT);
+	And(a=zrALU,b=instruction[1],out=JEQ);
+	And(a=ngALU,b=instruction[2],out=JLT);
+	And(a=pos,b=notzr,out=btz);
+	And(a=instruction[15],b=JMP,out=load);
+	Or(a=JLT,b=JGT,out=JNE);
+	Or(a=JNE,b=JEQ,out=JMP);
+	// incrementing
+	Not(in=JMP,out=nJMP);
+	And(a=nj1,b=nj2,out=nj1o2);
+	And(a=nj1o2,b=nj3,out=nj);
+	Or(a=nj,b=nJMP,out=CInsinc);
+	Or(a=CInsinc,b=nInst,out=inc);
+	PC(in=AregOut,reset=reset,load=load,inc=inc,out[0..14]=pc);
+}

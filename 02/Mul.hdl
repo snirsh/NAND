@@ -1,0 +1,41 @@
+CHIP Mul{
+    IN a[16], b[16];
+    OUT out[16];
+
+    PARTS:
+    // Binary multiplication of a with each of b's digits like long multiplication
+    Mux16(a=false,b=a,sel=b[0],out=s0);
+    Mux16(a=false,b=a,sel=b[1],out[0..14]=s1,out[15]=false);
+    Mux16(a=false,b=a,sel=b[2],out[0..13]=s2,out[14..15]=false);
+    Mux16(a=false,b=a,sel=b[2],out[0..12]=s3,out[13..15]=false);
+    Mux16(a=false,b=a,sel=b[2],out[0..11]=s4,out[12..15]=false);
+    Mux16(a=false,b=a,sel=b[2],out[0..10]=s5,out[11..15]=false);
+    Mux16(a=false,b=a,sel=b[2],out[0..9]=s6,out[10..15]=false);
+    Mux16(a=false,b=a,sel=b[2],out[0..8]=s7,out[9..15]=false);
+    Mux16(a=false,b=a,sel=b[2],out[0..7]=s8,out[8..15]=false);
+    Mux16(a=false,b=a,sel=b[2],out[0..6]=s9,out[7..15]=false);
+    Mux16(a=false,b=a,sel=b[2],out[0..5]=s10,out[6..15]=false);
+    Mux16(a=false,b=a,sel=b[2],out[0..4]=s11,out[5..15]=false);
+    Mux16(a=false,b=a,sel=b[2],out[0..3]=s12,out[4..15]=false);
+    Mux16(a=false,b=a,sel=b[2],out[0..2]=s13,out[3..15]=false);
+    Mux16(a=false,b=a,sel=b[2],out[0..1]=s14,out[2..15]=false);
+    Mux16(a=false,b=a,sel=b[2],out[0]=s15,out[1..15]=false);
+    // adding the results like in long multiplication
+    Add16(a=s0,b[0]=false,b[1..15]=temp1,out=o1);
+    Add16(a[0..1]=false,a[2..15]=s2,b[0..2]=false,b[3..15]=s3,out=o2);
+    Add16(a[0..3]=false,a[4..15]=s4,b[0..4]=false,b[5..15]=s5,out=o3);
+    Add16(a[0..5]=false,a[6..15]=s6,b[0..6]=false,b[7..15]=s7,out=o4);
+    Add16(a[0..7]=false,a[8..15]=s8,b[0..8]=false,b[9..15]=s9,out=o5);
+    Add16(a[0..9]=false,a[10..15]=s10,b[0..10]=false,b[11..15]=s11,out=o6);
+    Add16(a[0..11]=false,a[12..15]=s12,b[0..12]=false,b[13..15]=s13,out=o7);
+    Add16(a[0..13]=false,a[14..15]=s14,b[0..14]=false,b[15]=s15,out=o8);
+    // now for the outcome
+    Add16(a=o1,b=o2,out=prod1);
+    Add16(a=o3,b=o4,out=prod2);
+    Add16(a=o5,b=o6,out=prod3);
+    Add16(a=o7,b=o8,out=prod4);
+    Add16(a=prod1,b=prod2,out=out1);
+    Add16(a=prod3,b=prod4,out=out2);
+
+    Add16(a=out1,b=out2,out=out);
+}

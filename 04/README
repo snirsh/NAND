@@ -1,0 +1,27 @@
+snirsh
+===============================================================================
+Snir Sharristh, ID 305500001, snir.sharristh@cs.huji.ac.il
+===============================================================================
+
+				   Project 4: Machine Language Programming
+				   ---------------------------------------
+  
+
+Submitted Files
+---------------
+README 	- This file.
+divide 	- folder including:
+		 divide.asm - a program that outputs to R15= R13/R14
+	
+sort   	- folder including:
+		 sort.asm - a program that sorts an array of size M[15] starting from M[M[14]] by bubble sort
+
+mult	- folder including:
+		 mult.asm - a program that outputs to R15=R14*R13
+
+fill	- folder including:
+		 fill.asm - a program that blackens screen if input is detected otherwise screen is white
+		 
+Remarks
+-------
+*nothing special

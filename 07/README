@@ -1,0 +1,22 @@
+snirsh
+===============================================================================
+Snir Sharristh, ID 305500001, snir.sharristh@cs.huji.ac.il
+===============================================================================
+
+				   Project 7: VMTranslator
+				   -----------------------
+
+Submitted Files
+---------------
+README 	- This file.
+VMtranslator.py -   The main program constructs a Parser to parse the VM input file and a CodeWriter to generate code
+                    into the corresponding output file.
+                    then march through the VM commands in the input file and generate assembly code for each one of them
+Parser.py -         Handles the parsing of a single .vm file, and encapsulates access to the input code
+CodeWriter.py -     Translates VM commands into Hack assembly code
+VMtranslator -      executable of VMtranslator.py
+Makefile -          a simple makefile for my python file. also has a tar clean and test options
+
+Remarks
+-------
+*nothing special

@@ -1,0 +1,136 @@
+//PUSHING: constant 0
+@0
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+//POPPING: local 0
+@LCL
+D=M
+@0
+D=D+A
+@R13
+M=D
+@SP
+M=M-1
+@SP
+A=M
+D=M
+@R13
+A=M
+M=D
+(global.LOOP_START)
+//PUSHING: argument 0
+@ARG
+D=M
+@0
+A=D+A
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+//PUSHING: local 0
+@LCL
+D=M
+@0
+A=D+A
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+//BINARY OP:add
+@SP
+AM=M-1
+D=M
+A=A-1
+M=M+D
+//POPPING: local 0
+@LCL
+D=M
+@0
+D=D+A
+@R13
+M=D
+@SP
+M=M-1
+@SP
+A=M
+D=M
+@R13
+A=M
+M=D
+//PUSHING: argument 0
+@ARG
+D=M
+@0
+A=D+A
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+//PUSHING: constant 1
+@1
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+//BINARY OP:sub
+@SP
+AM=M-1
+D=M
+A=A-1
+M=M-D
+//POPPING: argument 0
+@ARG
+D=M
+@0
+D=D+A
+@R13
+M=D
+@SP
+M=M-1
+@SP
+A=M
+D=M
+@R13
+A=M
+M=D
+//PUSHING: argument 0
+@ARG
+D=M
+@0
+A=D+A
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@SP
+M=M-1
+@SP
+A=M
+D=M
+@global.LOOP_START
+D;JNE
+//PUSHING: local 0
+@LCL
+D=M
+@0
+A=D+A
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1

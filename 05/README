@@ -1,0 +1,21 @@
+snirsh
+===============================================================================
+Snir Sharristh, ID 305500001, snir.sharristh@cs.huji.ac.il
+===============================================================================
+
+				   Project 5: Computer Architecture
+				   --------------------------------
+  
+
+Submitted Files
+---------------
+README 	- This file.
+Computer.hdl	- The platform's top-most chip
+CPU.hdl			- The Hack CPU
+ExtendAlu.hdl	- Extends the ALU
+CpuMul.hdl		- extention of CPU with ExtendAlu.
+Memory.hdl		- Entire RAM address space
+		 
+Remarks
+-------
+*nothing special

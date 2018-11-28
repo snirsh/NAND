@@ -1,0 +1,18 @@
+snirsh
+===============================================================================
+Snir Sharristh, ID 305500001, snir.sharristh@cs.huji.ac.il
+===============================================================================
+
+				   Project 6: Assembler
+				   --------------------  
+
+Submitted Files
+---------------
+README 	- This file.
+Assembler.py - the python file with my assembler
+Assembler - executable of assembler.py
+Makefile - a simple makefile for my python file		 
+
+Remarks
+-------
+*nothing special
