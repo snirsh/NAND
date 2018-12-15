@@ -10,9 +10,9 @@
 #                                                                                                                      #
 ########################################################################################################################
 import ntpath
-import os
-
-from JackTokenizer import JackTokenizer
+import sys
+from lxml import etree as ET
+from JackTokenizer import *
 
 
 class CompilationEngine:

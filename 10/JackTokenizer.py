@@ -6,11 +6,9 @@
 # the Jack grammar.                                                                                                    #
 #                                                                                                                      #
 ########################################################################################################################
-import ntpath
 import os
 import re
-import sys
-from lxml import etree as ET
+
 
 KEYWORDS = ['class', 'constructor', 'function', 'method', 'field', 'static', 'var', 'int', 'char', 'boolean',
             'void', 'true', 'false', 'null', 'this', 'let', 'do', 'if', 'else', 'while', 'return']
@@ -142,17 +140,13 @@ class JackTokenizer(object):
         for line in self.__lines:
             for token in reg.findall(line):
                 self.tokens.append(token)
-        root = ET.Element('tokens')
-        while self.hasMoreTokens():
-            self.advance()
-            token_type = TYPES[self.tokenType()]
-            if token_type == 'stringConstant':
-                ET.SubElement(root, token_type).text = ' ' + self.current_token.strip('"') + ' '
-            else:
-                ET.SubElement(root, token_type).text = ' ' + self.current_token + ' '
-        tree = ET.ElementTree(root)
-        tree.write(self.__file_name + 'T.xml', pretty_print=True)
-
-
-if __name__ == '__main__':
-    JackTokenizer(os.path.abspath(sys.argv[1]))
+        # root = ET.Element('tokens')
+        # while self.hasMoreTokens():
+        #     self.advance()
+        #     token_type = TYPES[self.tokenType()]
+        #     if token_type == 'stringConstant':
+        #         ET.SubElement(root, token_type).text = ' ' + self.current_token.strip('"') + ' '
+        #     else:
+        #         ET.SubElement(root, token_type).text = ' ' + self.current_token + ' '
+        # tree = ET.ElementTree(root)
+        # tree.write(self.__file_name + 'T.xml', pretty_print=True)
