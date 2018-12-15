@@ -11,9 +11,9 @@ import re
 KEYWORDS = ['class', 'constructor', 'function', 'method', 'field', 'static', 'var', 'int', 'char', 'boolean',
             'void', 'true', 'false', 'null', 'this', 'let', 'do', 'if', 'else', 'while', 'return']
 SYMBOLS = ['{', '}', '(', ')', '[', ']', '.', ',', ';', '+', '-', '*', '/', '&', ',', '<', '>', '=', ' ~ ']
-IDENTIFIER_REGEX = re.compile('^[\D](\w)+(\S)')  # not starting with num any char and _ without whitespaces
-INTEGER_CONST_REGEX = re.compile('\d{1,5}')  # any digits of size 1 to 5 chars that contain any of 0-9
-STRING_CONST_REGEX = re.compile('^[\"]([^\n\"]+)[$\"]')  # anything but " and \n
+IDENTIFIER_REGEX = re.compile("^[\\D](\\w)+(\\S)")  # not starting with num any char and _ without whitespaces
+INTEGER_CONST_REGEX = re.compile("\\d{1,5}")  # any digits of size 1 to 5 chars that contain any of 0-9
+STRING_CONST_REGEX = re.compile("^[\\\"]([^\n\\\"]+)[$\\\"]")  # anything but " and \n that is wrapped in double quotes
 
 
 class JackTokenizer:
@@ -34,7 +34,7 @@ class JackTokenizer:
 
     def hasMoreTokens(self):
         """
-        this fcuntion checks if we have more tokens in the input
+        this function checks if we have more tokens in the input
         :return: Boolean
         """
         return self.line_number > 0
@@ -73,7 +73,6 @@ class JackTokenizer:
         :return: one of the strings in KEYWORD_TYPES
         """
         return self.current_token.upper()
-
 
     def symbol(self):
         """
