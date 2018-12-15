@@ -16,7 +16,7 @@ INTEGER_CONST_REGEX = re.compile("\\d{1,5}")  # any digits of size 1 to 5 chars 
 STRING_CONST_REGEX = re.compile("^[\\\"]([^\n\\\"]+)[$\\\"]")  # anything but " and \n that is wrapped in double quotes
 
 
-class JackTokenizer:
+class JackTokenizer(object):
 
     def __init__(self, input_file):
         """

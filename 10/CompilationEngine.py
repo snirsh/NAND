@@ -9,12 +9,111 @@
 # Thus, compilexxx() may only be called if indeed xxx is the next syntactic element of the input.                      #
 #                                                                                                                      #
 ########################################################################################################################
+import ntpath
+import os
+
+from JackTokenizer import JackTokenizer
+
 
 class CompilationEngine:
+
     def __init__(self, input, output):
         """
         creates a new compilation engine with the given input and output. the next routine called must be compileClass()
         :param input: input stream/file
         :param output: output stream/file
+        """
+        files = [file for file in os.listdir(input) if file.endswith('.jack')]
+        for file in files:
+            output_name = ntpath.basename(file)
+            self.tokenizer = JackTokenizer(file)
+            self.xml_file = open(output_name + '.xml', 'w')
+            self.CompileClass()
+
+    def CompileClass(self):
+        """
+        Compiles a complete class.
+        """
+        pass
+
+    def CompileClassVarDec(self):
+        """
+        Compiles a static declaration or a field declaration.
+        """
+        pass
+
+    def CompileSubroutine(self):
+        """
+        Compiles a complete method, function, or constructor.
+        """
+        pass
+
+    def CompileParameterList(self):
+        """
+        Compiles a (possibly empty) parameter list, not including the enclosing ‘‘ () ’’.
+        """
+        pass
+
+    def CompileVarDec(self):
+        """
+        Compiles a var declaration.
+        """
+        pass
+
+    def CompileStatements(self):
+        """
+        Compiles a sequence of statements, not including the enclosing ‘‘{}’’.
+        """
+        pass
+
+    def CompileDo(self):
+        """
+        Compiles a do statement.
+        """
+        pass
+
+    def CompileLet(self):
+        """
+        Compiles a let statement.
+        """
+        pass
+
+    def CompileWhile(self):
+        """
+        Compiles a while statement.
+        """
+        pass
+
+    def CompileReturn(self):
+        """
+        Compiles a return statement.
+        """
+        pass
+
+    def CompileIf(self):
+        """
+        Compiles an if statement, possibly with a trailing else clause.
+        """
+        pass
+
+    def CompileExpression(self):
+        """
+        Compiles an expression.
+        """
+        pass
+
+    def CompileTerm(self):
+        """
+        Compiles a term. This routine is faced with a slight difficulty when trying to decide between some of the
+        alternative parsing rules. Specifically, if the current token is an identifier, the routine must distinguish
+        between a variable, an array entry, and a subroutine call. A single look-ahead token, which may be one
+        of ‘‘[’’, ‘‘(’’, or ‘‘.’’ suffices to distinguish between the three possibilities. Any other token is not
+        part of this term and should not be advanced over.
+        """
+        pass
+
+    def CompileExpressionList(self):
+        """
+        Compiles a (possibly empty) comma-separated list of expressions.
         """
         pass
