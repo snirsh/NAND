@@ -37,7 +37,7 @@ class CompilationEngine:
             self.xml_file = ET
             self.CompileClass()
             __tree = self.xml_file.ElementTree(self._root)
-            __tree.write(self.output_name, pretty_print=True)
+            __tree.write(self.output_name, pretty_print=True, method='xml')
 
     def CompileClass(self):
         """
@@ -66,8 +66,9 @@ class CompilationEngine:
         """
         Compiles a static declaration or a field declaration.
         """
-        _classVarNode = self.xml_file.SubElement(self._root, 'classVarDec')
         peek = self.tokenizer.peek()
+        if 'static' in peek or 'field' in peek:
+            _classVarNode = self.xml_file.SubElement(self._root, 'classVarDec')
         while 'static' in peek or 'field' in peek:
             self.tokenizer.advance()
             self._write_line(_classVarNode, self.tokenizer.keyWord())  # field/static
@@ -348,7 +349,23 @@ class CompilationEngine:
             elif peek == '[':
                 self.tokenizer.advance()
                 self._write_line(term, self.tokenizer.symbol())
+                _from = self._current_node
+                self._current_node = term
                 self.CompileExpression()
+                self.tokenizer.advance()
+                self._write_line(term, self.tokenizer.symbol())
+                self._current_node = _from
+            elif peek == '.':
+                self.tokenizer.advance()
+                self._write_line(term, self.tokenizer.symbol())
+                self.tokenizer.advance()
+                self._write_line(term, self.tokenizer.identifier())
+                self.tokenizer.advance()
+                self._write_line(term, self.tokenizer.symbol())
+                last_node = self._current_node
+                self._current_node = term
+                self.CompileExpressionList()
+                self._current_node = last_node
                 self.tokenizer.advance()
                 self._write_line(term, self.tokenizer.symbol())
             elif peek in OPS:
