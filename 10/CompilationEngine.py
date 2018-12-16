@@ -14,93 +14,312 @@ import sys
 from lxml import etree as ET
 from JackTokenizer import *
 
+TYPES = {'KEYWORD': 'keyword', 'SYMBOL': 'symbol', 'IDENTIFIER': 'identifier', 'INT_CONST': 'integerConstant',
+         'STRING_CONST': 'stringConstant', 'INVALID_TOKEN_TYPE': 'INVALID_TOKEN_TYPE'}
+OPS = ['+', '-', '*', '/', '&', '|', '<', '>', '=']
+
 
 class CompilationEngine:
-
     def __init__(self, input, output):
         """
         creates a new compilation engine with the given input and output. the next routine called must be compileClass()
         :param input: input stream/file
         :param output: output stream/file
         """
+        self._root = None
+        self._current_node = None
         files = [file for file in os.listdir(input) if file.endswith('.jack')]
         for file in files:
-            output_name = ntpath.basename(file)
-            self.tokenizer = JackTokenizer(file)
-            self.xml_file = open(output_name + '.xml', 'w')
+            self.output_name = str(ntpath.basename(file).split('.jack')[0]) + '.xml'
+            self.output_name = os.path.join(os.path.abspath(input), self.output_name)
+            input_file = os.path.join(os.path.abspath(input), file)
+            self.tokenizer = JackTokenizer(input_file)
+            self.xml_file = ET
             self.CompileClass()
+            __tree = self.xml_file.ElementTree(self._root)
+            __tree.write(self.output_name, pretty_print=True)
 
     def CompileClass(self):
         """
         Compiles a complete class.
         """
-        pass
+        self._root = self.xml_file.Element('class')
+        self.tokenizer.advance()
+        self._write_line(self._root, self.tokenizer.keyWord())
+        self.tokenizer.advance()
+        self._write_line(self._root, self.tokenizer.identifier())
+        self.tokenizer.advance()
+        self._write_line(self._root, self.tokenizer.symbol())
+        self.CompileClassVarDec()
+        self.CompileSubroutine()
+        self.tokenizer.advance()
+        self._write_line(self._root, self.tokenizer.symbol())
+
+    def _write_line(self, node, name):
+        """
+        writes the current node to the output file
+        :param name: the name of the node
+        """
+        self.xml_file.SubElement(node, TYPES[self.tokenizer.tokenType()]).text = ' ' + name + ' '
 
     def CompileClassVarDec(self):
         """
         Compiles a static declaration or a field declaration.
         """
-        pass
+        _classVarNode = self.xml_file.SubElement(self._root, 'classVarDec')
+        peek = self.tokenizer.peek()
+        while 'static' in peek or 'field' in peek:
+            self.tokenizer.advance()
+            self._write_line(_classVarNode, self.tokenizer.keyWord())  # field/static
+            self.tokenizer.advance()
+            self._write_line(_classVarNode, self.tokenizer.keyWord())  # type
+            self.tokenizer.advance()
+            self._write_line(_classVarNode, self.tokenizer.identifier())  # name
+            self.tokenizer.advance()
+            while self.tokenizer.symbol() == ',':
+                self._write_line(_classVarNode, self.tokenizer.symbol())  # ,
+                self.tokenizer.advance()
+                self._write_line(_classVarNode, self.tokenizer.identifier())  # name
+                self.tokenizer.advance()
+            self._write_line(_classVarNode, self.tokenizer.symbol())  # ;
+            peek = self.tokenizer.peek()
+            if 'static' in peek or 'field' in peek:
+                _classVarNode = self.xml_file.SubElement(self._root, 'classVarDec')
 
     def CompileSubroutine(self):
         """
         Compiles a complete method, function, or constructor.
         """
-        pass
+        _last_node = self._current_node
+        _subroutineNode = self.xml_file.SubElement(self._root, 'subroutineDec')
+        self._current_node = _subroutineNode
+        peek = self.tokenizer.peek()
+        while 'function' in peek or 'constructor' in peek or 'method' in peek:
+            self.tokenizer.advance()
+            self._write_line(_subroutineNode, self.tokenizer.keyWord())  # const/func/method
+            self.tokenizer.advance()
+            self._write_line(_subroutineNode, self.tokenizer.current_token)  # void/type
+            self.tokenizer.advance()
+            self._write_line(_subroutineNode, self.tokenizer.identifier())  # name
+            self.tokenizer.advance()
+            self._write_line(_subroutineNode, self.tokenizer.symbol())  # '('
+            self.CompileParameterList()
+            self.tokenizer.advance()
+            self._write_line(_subroutineNode, self.tokenizer.symbol())  # ')'
+            self.tokenizer.advance()
+            self._current_node = self.xml_file.SubElement(_subroutineNode, 'subroutineBody')
+            self._write_line(self._current_node, self.tokenizer.symbol())  # '{'
+            peek = self.tokenizer.peek()
+            if 'var' in peek:
+                self.CompileVarDec()
+            self.CompileStatements()
+            self.tokenizer.advance()
+            self._write_line(self._current_node, self.tokenizer.symbol())  # '}'
+            peek = self.tokenizer.peek()
+            if 'function' in peek or 'constructor' in peek or 'method' in peek:
+                _subroutineNode = self.xml_file.SubElement(self._root, 'subroutineDec')
+                self._current_node = _subroutineNode
 
     def CompileParameterList(self):
         """
         Compiles a (possibly empty) parameter list, not including the enclosing ‘‘ () ’’.
         """
-        pass
+        param_list = self.xml_file.SubElement(self._current_node, 'parameterList')
+        peek = self.tokenizer.peek()
+        if peek != ')':
+            self.tokenizer.advance()
+            self._write_line(param_list, self.tokenizer.keyWord())  # type
+            self.tokenizer.advance()
+            self._write_line(param_list, self.tokenizer.identifier())  # name
+            peek = self.tokenizer.peek()
+        while peek == ',':
+            self.tokenizer.advance()
+            self._write_line(param_list, self.tokenizer.symbol())   # ','
+            self.tokenizer.advance()
+            self._write_line(param_list, self.tokenizer.keyWord())  # type
+            self.tokenizer.advance()
+            self._write_line(param_list, self.tokenizer.identifier())  # name
+            peek = self.tokenizer.peek()
 
     def CompileVarDec(self):
         """
         Compiles a var declaration.
         """
-        pass
+        _varDecNode = self.xml_file.SubElement(self._current_node, 'varDec')
+        peek = self.tokenizer.peek()
+        while 'var' in peek:
+            self.tokenizer.advance()
+            self._write_line(_varDecNode, self.tokenizer.keyWord())
+            self.tokenizer.advance()
+            self._write_line(_varDecNode, self.tokenizer.keyWord())
+            self.tokenizer.advance()
+            self._write_line(_varDecNode, self.tokenizer.identifier())
+            self.tokenizer.advance()
+            while self.tokenizer.symbol() == ',':
+                self._write_line(_varDecNode, self.tokenizer.symbol())  # ,
+                self.tokenizer.advance()
+                self._write_line(_varDecNode, self.tokenizer.identifier())  # name
+                self.tokenizer.advance()
+            self._write_line(_varDecNode, self.tokenizer.symbol())  # ;
+            peek = self.tokenizer.peek()
+            if peek == 'var':
+                _varDecNode = self.xml_file.SubElement(self._current_node, 'varDec')
 
     def CompileStatements(self):
         """
         Compiles a sequence of statements, not including the enclosing ‘‘{}’’.
         """
-        pass
+        peek = self.tokenizer.peek()
+        _parent = self._current_node
+        self._current_node = ET.SubElement(self._current_node, 'statements')
+        while 'let' in peek or 'if' in peek or 'while' in peek or 'do' in peek or 'return' in peek:
+            if 'let' in peek:
+                self.CompileLet()
+            elif 'if' in peek:
+                self.CompileIf()
+            elif 'while' in peek:
+                self.CompileWhile()
+            elif 'do' in peek:
+                self.CompileDo()
+            elif 'return' in peek:
+                self.CompileReturn()
+            peek = self.tokenizer.peek()
+        self._current_node = _parent
 
     def CompileDo(self):
         """
         Compiles a do statement.
         """
-        pass
+        _last_node = self._current_node
+        _statement = self.xml_file.SubElement(self._current_node, 'doStatement')
+        self._current_node = _statement
+        self.tokenizer.advance()
+        self._write_line(_statement, self.tokenizer.keyWord())
+        self.tokenizer.advance()
+        self._write_line(_statement, self.tokenizer.identifier())
+        peek = self.tokenizer.peek()
+        while peek == '.':
+            self.tokenizer.advance()
+            self._write_line(_statement, self.tokenizer.symbol())
+            self.tokenizer.advance()
+            self._write_line(_statement, self.tokenizer.identifier())
+            peek = self.tokenizer.peek()
+        self.tokenizer.advance()
+        self._write_line(_statement, self.tokenizer.symbol())  # '('
+        self.CompileExpressionList()
+        self.tokenizer.advance()
+        self._write_line(_statement, self.tokenizer.symbol())  # ')'
+        self.tokenizer.advance()
+        self._write_line(_statement, self.tokenizer.symbol())  # ';'
+        self._current_node = _last_node
 
     def CompileLet(self):
         """
         Compiles a let statement.
         """
-        pass
+        _last_node = self._current_node
+        _statement = self.xml_file.SubElement(self._current_node, 'letStatement')
+        self._current_node = _statement
+        self.tokenizer.advance()
+        self._write_line(_statement, self.tokenizer.keyWord())
+        self.tokenizer.advance()
+        self._write_line(_statement, self.tokenizer.identifier())
+        peek = self.tokenizer.peek()
+        if peek == '[':
+            self.tokenizer.advance()
+            self._write_line(_statement, self.tokenizer.symbol())  # '['
+            self.tokenizer.advance()
+            self.CompileExpression()
+            self.tokenizer.advance()
+            self._write_line(_statement, self.tokenizer.symbol())  # ']'
+        self.tokenizer.advance()
+        self._write_line(_statement, self.tokenizer.symbol())  # '='
+        self.tokenizer.advance()
+        self.CompileExpression()
+        self.tokenizer.advance()
+        self._write_line(_statement, self.tokenizer.symbol())  # ';'
+        self._current_node = _last_node
 
     def CompileWhile(self):
         """
         Compiles a while statement.
         """
-        pass
+        _last_node = self._current_node
+        _statement = self.xml_file.SubElement(self._current_node, 'whileStatement')
+        self._current_node = _statement
+        self.tokenizer.advance()
+        self._write_line(_statement, self.tokenizer.keyWord())  # while
+        self.tokenizer.advance()
+        self._write_line(_statement, self.tokenizer.symbol())  # '('
+        self.tokenizer.advance()
+        self.CompileExpression()
+        self.tokenizer.advance()
+        self._write_line(_statement, self.tokenizer.symbol())  # ')'
+        self.tokenizer.advance()
+        self._write_line(_statement, self.tokenizer.symbol())  # '{'
+        self.CompileStatements()
+        self.tokenizer.advance()
+        self._write_line(_statement, self.tokenizer.symbol())  # '}'
+        self._current_node = _last_node
 
     def CompileReturn(self):
         """
         Compiles a return statement.
         """
-        pass
+        _last_node = self._current_node
+        _statement = self.xml_file.SubElement(self._current_node, 'returnStatement')
+        self._current_node = _statement
+        self.tokenizer.advance()
+        self._write_line(_statement, self.tokenizer.keyWord())  # return
+        peek = self.tokenizer.peek()
+        if peek != ';':
+            self.tokenizer.advance()
+            self.CompileExpression()
+            self.tokenizer.advance()
+        else:
+            self.tokenizer.advance()
+        self._write_line(self._current_node, self.tokenizer.symbol())  # ';'
+        self._current_node = _last_node
 
     def CompileIf(self):
         """
         Compiles an if statement, possibly with a trailing else clause.
         """
-        pass
+        _last_node = self._current_node
+        _statement = self.xml_file.SubElement(self._current_node, 'ifStatement')
+        self._current_node = _statement
+        self.tokenizer.advance()
+        self._write_line(_statement, self.tokenizer.keyWord())  # if
+        self.tokenizer.advance()
+        self._write_line(_statement, self.tokenizer.symbol())  # '('
+        self.tokenizer.advance()
+        self.CompileExpression()
+        self.tokenizer.advance()
+        self._write_line(_statement, self.tokenizer.symbol())  # ')'
+        self.tokenizer.advance()
+        self._write_line(_statement, self.tokenizer.symbol())  # '{'
+        self.CompileStatements()
+        self.tokenizer.advance()
+        self._write_line(_statement, self.tokenizer.symbol())  # '}'
+        peek = self.tokenizer.peek()
+        if peek == 'else':
+            self.tokenizer.advance()
+            self._write_line(_statement, self.tokenizer.keyWord())  # else
+            self.tokenizer.advance()
+            self._write_line(_statement, self.tokenizer.symbol())  # '{'
+            self.CompileStatements()
+            self.tokenizer.advance()
+            self._write_line(_statement, self.tokenizer.symbol())  # '}'
+        self._current_node = _last_node
 
     def CompileExpression(self):
         """
         Compiles an expression.
         """
-        pass
+        _last_node = self._current_node
+        self._current_node = self.xml_file.SubElement(self._current_node, 'expression')
+        self.CompileTerm()
+        self._current_node = _last_node
 
     def CompileTerm(self):
         """
@@ -110,10 +329,54 @@ class CompilationEngine:
         of ‘‘[’’, ‘‘(’’, or ‘‘.’’ suffices to distinguish between the three possibilities. Any other token is not
         part of this term and should not be advanced over.
         """
-        pass
+        term = self.xml_file.SubElement(self._current_node, 'term')
+        if self.tokenizer.tokenType() == 'STRING_CONST':
+            self._write_line(term, self.tokenizer.stringVal())
+        elif self.tokenizer.tokenType() == 'INT_CONST':
+            self._write_line(term, self.tokenizer.intVal())
+        elif self.tokenizer.tokenType() == 'KEYWORD':
+            self._write_line(term, self.tokenizer.keyWord())
+        elif self.tokenizer.tokenType() == 'IDENTIFIER':
+            self._write_line(term, self.tokenizer.identifier())
+            peek = self.tokenizer.peek()
+            if peek == '(':
+                self.tokenizer.advance()
+                self._write_line(term, self.tokenizer.symbol())
+                self.CompileExpressionList()
+                self.tokenizer.advance()
+                self._write_line(term, self.tokenizer.symbol())
+            elif peek == '[':
+                self.tokenizer.advance()
+                self._write_line(term, self.tokenizer.symbol())
+                self.CompileExpression()
+                self.tokenizer.advance()
+                self._write_line(term, self.tokenizer.symbol())
+            elif peek in OPS:
+                self.tokenizer.advance()
+                self._write_line(self._current_node, self.tokenizer.symbol())
+                self.tokenizer.advance()
+                self.CompileTerm()
+        elif self.tokenizer.current_token in OPS:
+            self._write_line(self._current_node, self.tokenizer.symbol())
+            self.tokenizer.advance()
+            self.CompileTerm()
 
     def CompileExpressionList(self):
         """
         Compiles a (possibly empty) comma-separated list of expressions.
         """
-        pass
+        last_node = self._current_node
+        self._current_node = self.xml_file.SubElement(self._current_node, 'expressionList')
+        peek = self.tokenizer.peek()
+        while peek != ')':
+            self.tokenizer.advance()
+            if peek == ',':
+                self._write_line(self._current_node, self.tokenizer.symbol())
+                self.tokenizer.advance()
+            self.CompileExpression()
+            peek = self.tokenizer.peek()
+        self._current_node = last_node
+
+
+if __name__ == '__main__':
+    CompilationEngine(sys.argv[1], '')

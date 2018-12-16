@@ -12,8 +12,6 @@ import re
 
 KEYWORDS = ['class', 'constructor', 'function', 'method', 'field', 'static', 'var', 'int', 'char', 'boolean',
             'void', 'true', 'false', 'null', 'this', 'let', 'do', 'if', 'else', 'while', 'return']
-TYPES = {'KEYWORD': 'keyword', 'SYMBOL': 'symbol', 'IDENTIFIER': 'identifier', 'INT_CONST': 'integerConstant',
-         'STRING_CONST': 'stringConstant', 'INVALID_TOKEN_TYPE': 'INVALID_TOKEN_TYPE'}
 SYMBOLS = ['{', '}', '(', ')', '[', ']', '.', ',', ';', '+', '-', '*', '/', '&', '<', '>', '=', '~', '|']
 BRACKETS = SYMBOLS[:6]
 IDENTIFIER_REGEX = re.compile('[\\D](\\w\\S)*')  # not starting with num any char and _ without whitespaces
@@ -100,7 +98,7 @@ class JackTokenizer(object):
         returns the keyword which is the current token. should be called only when tokenType() is KEYWORD
         :return: one of the strings in KEYWORD_TYPES
         """
-        return self.current_token.upper()
+        return self.current_token
 
     def symbol(self):
         """
@@ -133,7 +131,10 @@ class JackTokenizer(object):
         """
         returns the string value which is the current token. should be called only when tokenType() is STRING_CONST
         """
-        return self.current_token
+        return self.current_token.strip('"')
+
+    def peek(self):
+        return self.tokens[self.token_number]
 
     def __tokenize(self):
         reg = re.compile('\"[^\n\"]*\"|[{}()\\[\\]+\\-*/&<>,;.=~|]|\\w+')
