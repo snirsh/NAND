@@ -105,14 +105,14 @@ class JackTokenizer(object):
         returns the character which is the current token. should be called only when tokenType() is SYMBOL
         :return: Char
         """
-        if self.current_token == '<':
-            return '&lt;'
-        elif self.current_token == '>':
-            return '&gt;'
-        elif self.current_token == '"':
-            return '&quot;'
-        elif self.current_token == '&':
-            return '&amp;'
+        # if self.current_token == '<':
+        #     return '&lt;'
+        # elif self.current_token == '>':
+        #     return '&gt;'
+        # elif self.current_token == '"':
+        #     return '&quot;'
+        # elif self.current_token == '&':
+        #     return '&amp;'
         return self.current_token
 
     def identifier(self):

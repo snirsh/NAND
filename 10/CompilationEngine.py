@@ -37,7 +37,7 @@ class CompilationEngine:
             self.xml_file = ET
             self.CompileClass()
             __tree = self.xml_file.ElementTree(self._root)
-            __tree.write(self.output_name, pretty_print=True, method='xml')
+            __tree.write(self.output_name, method='xml', pretty_print=True)
 
     def CompileClass(self):
         """
@@ -135,12 +135,14 @@ class CompilationEngine:
             peek = self.tokenizer.peek()
         while peek == ',':
             self.tokenizer.advance()
-            self._write_line(param_list, self.tokenizer.symbol())   # ','
+            self._write_line(param_list, self.tokenizer.symbol())  # ','
             self.tokenizer.advance()
             self._write_line(param_list, self.tokenizer.keyWord())  # type
             self.tokenizer.advance()
             self._write_line(param_list, self.tokenizer.identifier())  # name
             peek = self.tokenizer.peek()
+        if not param_list.text:
+            param_list.text = '\n'
 
     def CompileVarDec(self):
         """
@@ -351,10 +353,11 @@ class CompilationEngine:
                 self._write_line(term, self.tokenizer.symbol())
                 _from = self._current_node
                 self._current_node = term
+                self.tokenizer.advance()
                 self.CompileExpression()
+                self._current_node = _from
                 self.tokenizer.advance()
                 self._write_line(term, self.tokenizer.symbol())
-                self._current_node = _from
             elif peek == '.':
                 self.tokenizer.advance()
                 self._write_line(term, self.tokenizer.symbol())
@@ -392,6 +395,8 @@ class CompilationEngine:
                 self.tokenizer.advance()
             self.CompileExpression()
             peek = self.tokenizer.peek()
+        if not self._current_node.text:
+            self._current_node.text = '\n'
         self._current_node = last_node
 
 
