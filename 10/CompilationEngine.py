@@ -117,7 +117,7 @@ class CompilationEngine:
 
     def CompileParameterList(self):
         """
-        Compiles a (possibly empty) parameter list, not including the enclosing ‘‘ () ’’.
+        Compiles a (possibly empty) parameter list, not including the enclosing ()
         """
         param_list = self.xml_file.SubElement(self._current_node, 'parameterList')
         peek = self.tokenizer.peek()
@@ -164,7 +164,7 @@ class CompilationEngine:
 
     def CompileStatements(self):
         """
-        Compiles a sequence of statements, not including the enclosing ‘‘{}’’.
+        Compiles a sequence of statements, not including the enclosing "{}"
         """
         peek = self.tokenizer.peek()
         _parent = self._current_node
@@ -330,7 +330,7 @@ class CompilationEngine:
         Compiles a term. This routine is faced with a slight difficulty when trying to decide between some of the
         alternative parsing rules. Specifically, if the current token is an identifier, the routine must distinguish
         between a variable, an array entry, and a subroutine call. A single look-ahead token, which may be one
-        of ‘‘[’’, ‘‘(’’, or ‘‘.’’ suffices to distinguish between the three possibilities. Any other token is not
+        of [, (, or . suffices to distinguish between the three possibilities. Any other token is not
         part of this term and should not be advanced over.
         """
         term_branch = self.xml_file.SubElement(self._current_node, 'term')
