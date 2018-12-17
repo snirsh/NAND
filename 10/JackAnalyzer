@@ -1,1 +1,1 @@
-python3 JackAnalyzer.py $1
+python3 JackAnalyzer.py $*
