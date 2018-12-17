@@ -17,6 +17,7 @@ from JackTokenizer import *
 TYPES = {'KEYWORD': 'keyword', 'SYMBOL': 'symbol', 'IDENTIFIER': 'identifier', 'INT_CONST': 'integerConstant',
          'STRING_CONST': 'stringConstant', 'INVALID_TOKEN_TYPE': 'INVALID_TOKEN_TYPE'}
 OPS = ['+', '-', '*', '/', '&', '|', '<', '>', '=']
+UNARY_OP = ['-', '~']
 
 
 class CompilationEngine:
@@ -28,16 +29,11 @@ class CompilationEngine:
         """
         self._root = None
         self._current_node = None
-        files = [file for file in os.listdir(input) if file.endswith('.jack')]
-        for file in files:
-            self.output_name = str(ntpath.basename(file).split('.jack')[0]) + '.xml'
-            self.output_name = os.path.join(os.path.abspath(input), self.output_name)
-            input_file = os.path.join(os.path.abspath(input), file)
-            self.tokenizer = JackTokenizer(input_file)
-            self.xml_file = ET
-            self.CompileClass()
-            __tree = self.xml_file.ElementTree(self._root)
-            __tree.write(self.output_name, method='xml', pretty_print=True)
+        self.tokenizer = JackTokenizer(input)
+        self.xml_file = ET
+        self.CompileClass()
+        __tree = self.xml_file.ElementTree(self._root)
+        __tree.write(output, method='xml', pretty_print=True, encoding='utf-8')
 
     def CompileClass(self):
         """
@@ -322,6 +318,13 @@ class CompilationEngine:
         _last_node = self._current_node
         self._current_node = self.xml_file.SubElement(self._current_node, 'expression')
         self.CompileTerm()
+        peek = self.tokenizer.peek()
+        while peek in OPS:
+            self.tokenizer.advance()
+            self._write_line(self._current_node, self.tokenizer.symbol())
+            self.tokenizer.advance()
+            self.CompileTerm()
+            peek = self.tokenizer.peek()
         self._current_node = _last_node
 
     def CompileTerm(self):
@@ -332,54 +335,54 @@ class CompilationEngine:
         of ‘‘[’’, ‘‘(’’, or ‘‘.’’ suffices to distinguish between the three possibilities. Any other token is not
         part of this term and should not be advanced over.
         """
-        term = self.xml_file.SubElement(self._current_node, 'term')
-        if self.tokenizer.tokenType() == 'STRING_CONST':
-            self._write_line(term, self.tokenizer.stringVal())
-        elif self.tokenizer.tokenType() == 'INT_CONST':
-            self._write_line(term, self.tokenizer.intVal())
-        elif self.tokenizer.tokenType() == 'KEYWORD':
-            self._write_line(term, self.tokenizer.keyWord())
-        elif self.tokenizer.tokenType() == 'IDENTIFIER':
-            self._write_line(term, self.tokenizer.identifier())
+        term_branch = self.xml_file.SubElement(self._current_node, 'term')
+        # self.tokenizer.advance()
+        if self.tokenizer.tokenType() == 'INT_CONST' or self.tokenizer.tokenType() == 'KEYWORD':
+            self._write_line(term_branch, self.tokenizer.current_token)
+        elif self.tokenizer.tokenType() == 'STRING_CONST':
+            self._write_line(term_branch, self.tokenizer.stringVal())
+        elif self.tokenizer.current_token in UNARY_OP:
+            self._write_line(term_branch, self.tokenizer.symbol())
+            last_node = self._current_node
+            self._current_node = term_branch
+            self.tokenizer.advance()
+            self.CompileTerm()
+            self._current_node = last_node
+        elif self.tokenizer.current_token in SYMBOLS:
+            self._write_line(term_branch, self.tokenizer.symbol())
+            self.tokenizer.advance()
+            last_node = self._current_node
+            self._current_node = term_branch
+            self.CompileExpression()
+            self._current_node = last_node
+            self.tokenizer.advance()
+            self._write_line(term_branch, self.tokenizer.symbol())
+        else:
+            self._write_line(term_branch, self.tokenizer.identifier())
             peek = self.tokenizer.peek()
-            if peek == '(':
+            if '[' in peek or '(' in peek:
                 self.tokenizer.advance()
-                self._write_line(term, self.tokenizer.symbol())
-                self.CompileExpressionList()
+                self._write_line(term_branch, self.tokenizer.symbol())
                 self.tokenizer.advance()
-                self._write_line(term, self.tokenizer.symbol())
-            elif peek == '[':
-                self.tokenizer.advance()
-                self._write_line(term, self.tokenizer.symbol())
-                _from = self._current_node
-                self._current_node = term
-                self.tokenizer.advance()
-                self.CompileExpression()
-                self._current_node = _from
-                self.tokenizer.advance()
-                self._write_line(term, self.tokenizer.symbol())
-            elif peek == '.':
-                self.tokenizer.advance()
-                self._write_line(term, self.tokenizer.symbol())
-                self.tokenizer.advance()
-                self._write_line(term, self.tokenizer.identifier())
-                self.tokenizer.advance()
-                self._write_line(term, self.tokenizer.symbol())
                 last_node = self._current_node
-                self._current_node = term
+                self._current_node = term_branch
+                self.CompileExpression()
+                self._current_node = last_node
+                self.tokenizer.advance()
+                self._write_line(term_branch, self.tokenizer.symbol())
+            elif '.' in peek:
+                self.tokenizer.advance()
+                self._write_line(term_branch, self.tokenizer.symbol())
+                self.tokenizer.advance()
+                self._write_line(term_branch, self.tokenizer.identifier())
+                self.tokenizer.advance()
+                self._write_line(term_branch, self.tokenizer.symbol())
+                last_node = self._current_node
+                self._current_node = term_branch
                 self.CompileExpressionList()
                 self._current_node = last_node
                 self.tokenizer.advance()
-                self._write_line(term, self.tokenizer.symbol())
-            elif peek in OPS:
-                self.tokenizer.advance()
-                self._write_line(self._current_node, self.tokenizer.symbol())
-                self.tokenizer.advance()
-                self.CompileTerm()
-        elif self.tokenizer.current_token in OPS:
-            self._write_line(self._current_node, self.tokenizer.symbol())
-            self.tokenizer.advance()
-            self.CompileTerm()
+                self._write_line(term_branch, self.tokenizer.symbol())
 
     def CompileExpressionList(self):
         """
@@ -398,7 +401,3 @@ class CompilationEngine:
         if not self._current_node.text:
             self._current_node.text = '\n'
         self._current_node = last_node
-
-
-if __name__ == '__main__':
-    CompilationEngine(sys.argv[1], '')

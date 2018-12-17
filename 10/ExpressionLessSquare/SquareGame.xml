@@ -19,7 +19,8 @@
     <identifier> SquareGame </identifier>
     <identifier> new </identifier>
     <symbol> ( </symbol>
-    <parameterList/>
+    <parameterList>
+    </parameterList>
     <symbol> ) </symbol>
     <subroutineBody>
       <symbol> { </symbol>
@@ -64,7 +65,8 @@
     <keyword> void </keyword>
     <identifier> dispose </identifier>
     <symbol> ( </symbol>
-    <parameterList/>
+    <parameterList>
+    </parameterList>
     <symbol> ) </symbol>
     <subroutineBody>
       <symbol> { </symbol>
@@ -75,7 +77,8 @@
           <symbol> . </symbol>
           <identifier> dispose </identifier>
           <symbol> ( </symbol>
-          <expressionList/>
+          <expressionList>
+          </expressionList>
           <symbol> ) </symbol>
           <symbol> ; </symbol>
         </doStatement>
@@ -108,7 +111,8 @@
     <keyword> void </keyword>
     <identifier> moveSquare </identifier>
     <symbol> ( </symbol>
-    <parameterList/>
+    <parameterList>
+    </parameterList>
     <symbol> ) </symbol>
     <subroutineBody>
       <symbol> { </symbol>
@@ -130,7 +134,8 @@
               <symbol> . </symbol>
               <identifier> moveUp </identifier>
               <symbol> ( </symbol>
-              <expressionList/>
+              <expressionList>
+              </expressionList>
               <symbol> ) </symbol>
               <symbol> ; </symbol>
             </doStatement>
@@ -154,7 +159,8 @@
               <symbol> . </symbol>
               <identifier> moveDown </identifier>
               <symbol> ( </symbol>
-              <expressionList/>
+              <expressionList>
+              </expressionList>
               <symbol> ) </symbol>
               <symbol> ; </symbol>
             </doStatement>
@@ -178,7 +184,8 @@
               <symbol> . </symbol>
               <identifier> moveLeft </identifier>
               <symbol> ( </symbol>
-              <expressionList/>
+              <expressionList>
+              </expressionList>
               <symbol> ) </symbol>
               <symbol> ; </symbol>
             </doStatement>
@@ -202,7 +209,8 @@
               <symbol> . </symbol>
               <identifier> moveRight </identifier>
               <symbol> ( </symbol>
-              <expressionList/>
+              <expressionList>
+              </expressionList>
               <symbol> ) </symbol>
               <symbol> ; </symbol>
             </doStatement>
@@ -238,7 +246,8 @@
     <keyword> void </keyword>
     <identifier> run </identifier>
     <symbol> ( </symbol>
-    <parameterList/>
+    <parameterList>
+    </parameterList>
     <symbol> ) </symbol>
     <subroutineBody>
       <symbol> { </symbol>
@@ -303,7 +312,8 @@
                   <keyword> do </keyword>
                   <identifier> moveSquare </identifier>
                   <symbol> ( </symbol>
-                  <expressionList/>
+                  <expressionList>
+                  </expressionList>
                   <symbol> ) </symbol>
                   <symbol> ; </symbol>
                 </doStatement>
@@ -352,7 +362,8 @@
                   <symbol> . </symbol>
                   <identifier> decSize </identifier>
                   <symbol> ( </symbol>
-                  <expressionList/>
+                  <expressionList>
+                  </expressionList>
                   <symbol> ) </symbol>
                   <symbol> ; </symbol>
                 </doStatement>
@@ -376,7 +387,8 @@
                   <symbol> . </symbol>
                   <identifier> incSize </identifier>
                   <symbol> ( </symbol>
-                  <expressionList/>
+                  <expressionList>
+                  </expressionList>
                   <symbol> ) </symbol>
                   <symbol> ; </symbol>
                 </doStatement>
@@ -509,7 +521,8 @@
                   <keyword> do </keyword>
                   <identifier> moveSquare </identifier>
                   <symbol> ( </symbol>
-                  <expressionList/>
+                  <expressionList>
+                  </expressionList>
                   <symbol> ) </symbol>
                   <symbol> ; </symbol>
                 </doStatement>
