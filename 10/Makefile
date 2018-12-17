@@ -9,7 +9,6 @@
 FILES = JackAnalyzer.py Makefile JackTokenizer.py README JackAnalyzer CompilationEngine.py
 
 all:
-	chmod 700 $(FILES)
 	chmod a+x JackAnalyzer
 
 tar:
@@ -19,4 +18,5 @@ clean:
 	rm project10.tar
 
 test:
+	chmod 700 $(FILES)
 	test10.sh

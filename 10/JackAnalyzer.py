@@ -1,16 +1,21 @@
-from CompilationEngine import *
-import sys
 import glob
-from os.path import join as osjoin
+import sys
+
+from CompilationEngine import *
 
 
 def main():
-    input_path = sys.argv[1]
-    files = [_ for _ in glob.glob(osjoin(input_path, '*' + '.jack'))]
-    for input_file in files:
-        output_name = input_file.split('.jack')[0]
-        output_name += '.xml'
-        CompilationEngine(input_file, output_name)
+    if len(sys.argv) != 2:
+        print(' Usage error - please insert file or directory.')
+        return
+    input_path = os.path.abspath(sys.argv[1])
+    if input_path.endswith('.jack'):
+        input_path = [input_path]
+    else:
+        input_path = glob.glob(input_path + '/*.jack')
+    for _ in input_path:
+        out_xml = _.replace('.jack', '.xml')
+        CompilationEngine(_, out_xml)
 
 
 if __name__ == '__main__':

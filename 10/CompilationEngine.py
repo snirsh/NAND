@@ -28,16 +28,20 @@ class CompilationEngine:
         self._root = None
         self._current_node = None
         self.tokenizer = JackTokenizer(input_path)
-        self.xml_file = ET
         self.CompileClass()
-        __tree = self.xml_file.ElementTree(self._root)
-        __tree.write(output_path, method='xml', pretty_print=True, encoding='utf-8')
+        for elem in self._root.iter():
+            if elem.tag == 'expressionList' or elem.tag == 'parameterList':
+                if "/>" in str(ET.tostring(elem)):
+                    elem.text = '\n'
+        p = ET.XMLParser(remove_blank_text=True)
+        tree = ET.ElementTree(self._root, parser=p)
+        tree.write(output_path, method='xml', pretty_print=True)
 
     def CompileClass(self):
         """
         Compiles a complete class.
         """
-        self._root = self.xml_file.Element('class')
+        self._root = ET.Element('class')
         self.tokenizer.advance()
         self._write_line(self._root, self.tokenizer.keyWord())
         self.tokenizer.advance()
@@ -54,7 +58,8 @@ class CompilationEngine:
         writes the current node to the output file
         :param name: the name of the node
         """
-        self.xml_file.SubElement(node, TYPES[self.tokenizer.tokenType()]).text = ' ' + name + ' '
+        _ = ET.SubElement(node, TYPES[self.tokenizer.tokenType()])
+        _.text = ' ' + name + ' '
 
     def CompileClassVarDec(self):
         """
@@ -62,7 +67,7 @@ class CompilationEngine:
         """
         peek = self.tokenizer.peek()
         if 'static' in peek or 'field' in peek:
-            _classVarNode = self.xml_file.SubElement(self._root, 'classVarDec')
+            _classVarNode = ET.SubElement(self._root, 'classVarDec')
         while 'static' in peek or 'field' in peek:
             self.tokenizer.advance()
             self._write_line(_classVarNode, self.tokenizer.keyWord())  # field/static
@@ -79,14 +84,14 @@ class CompilationEngine:
             self._write_line(_classVarNode, self.tokenizer.symbol())  # ;
             peek = self.tokenizer.peek()
             if 'static' in peek or 'field' in peek:
-                _classVarNode = self.xml_file.SubElement(self._root, 'classVarDec')
+                _classVarNode = ET.SubElement(self._root, 'classVarDec')
 
     def CompileSubroutine(self):
         """
         Compiles a complete method, function, or constructor.
         """
         _last_node = self._current_node
-        _subroutineNode = self.xml_file.SubElement(self._root, 'subroutineDec')
+        _subroutineNode = ET.SubElement(self._root, 'subroutineDec')
         self._current_node = _subroutineNode
         peek = self.tokenizer.peek()
         while 'function' in peek or 'constructor' in peek or 'method' in peek:
@@ -102,7 +107,7 @@ class CompilationEngine:
             self.tokenizer.advance()
             self._write_line(_subroutineNode, self.tokenizer.symbol())  # ')'
             self.tokenizer.advance()
-            self._current_node = self.xml_file.SubElement(_subroutineNode, 'subroutineBody')
+            self._current_node = ET.SubElement(_subroutineNode, 'subroutineBody')
             self._write_line(self._current_node, self.tokenizer.symbol())  # '{'
             peek = self.tokenizer.peek()
             if 'var' in peek:
@@ -112,14 +117,14 @@ class CompilationEngine:
             self._write_line(self._current_node, self.tokenizer.symbol())  # '}'
             peek = self.tokenizer.peek()
             if 'function' in peek or 'constructor' in peek or 'method' in peek:
-                _subroutineNode = self.xml_file.SubElement(self._root, 'subroutineDec')
+                _subroutineNode = ET.SubElement(self._root, 'subroutineDec')
                 self._current_node = _subroutineNode
 
     def CompileParameterList(self):
         """
         Compiles a (possibly empty) parameter list, not including the enclosing ()
         """
-        param_list = self.xml_file.SubElement(self._current_node, 'parameterList')
+        param_list = ET.SubElement(self._current_node, 'parameterList')
         peek = self.tokenizer.peek()
         if peek != ')':
             self.tokenizer.advance()
@@ -135,14 +140,14 @@ class CompilationEngine:
             self.tokenizer.advance()
             self._write_line(param_list, self.tokenizer.identifier())  # name
             peek = self.tokenizer.peek()
-        if not param_list.text:
-            param_list.text = '\n'
+        # if not param_list.text:
+        #     param_list.text = '\n'
 
     def CompileVarDec(self):
         """
         Compiles a var declaration.
         """
-        _varDecNode = self.xml_file.SubElement(self._current_node, 'varDec')
+        _varDecNode = ET.SubElement(self._current_node, 'varDec')
         peek = self.tokenizer.peek()
         while 'var' in peek:
             self.tokenizer.advance()
@@ -160,7 +165,7 @@ class CompilationEngine:
             self._write_line(_varDecNode, self.tokenizer.symbol())  # ;
             peek = self.tokenizer.peek()
             if peek == 'var':
-                _varDecNode = self.xml_file.SubElement(self._current_node, 'varDec')
+                _varDecNode = ET.SubElement(self._current_node, 'varDec')
 
     def CompileStatements(self):
         """
@@ -188,7 +193,7 @@ class CompilationEngine:
         Compiles a do statement.
         """
         _last_node = self._current_node
-        _statement = self.xml_file.SubElement(self._current_node, 'doStatement')
+        _statement = ET.SubElement(self._current_node, 'doStatement')
         self._current_node = _statement
         self.tokenizer.advance()
         self._write_line(_statement, self.tokenizer.keyWord())
@@ -215,7 +220,7 @@ class CompilationEngine:
         Compiles a let statement.
         """
         _last_node = self._current_node
-        _statement = self.xml_file.SubElement(self._current_node, 'letStatement')
+        _statement = ET.SubElement(self._current_node, 'letStatement')
         self._current_node = _statement
         self.tokenizer.advance()
         self._write_line(_statement, self.tokenizer.keyWord())
@@ -242,7 +247,7 @@ class CompilationEngine:
         Compiles a while statement.
         """
         _last_node = self._current_node
-        _statement = self.xml_file.SubElement(self._current_node, 'whileStatement')
+        _statement = ET.SubElement(self._current_node, 'whileStatement')
         self._current_node = _statement
         self.tokenizer.advance()
         self._write_line(_statement, self.tokenizer.keyWord())  # while
@@ -264,7 +269,7 @@ class CompilationEngine:
         Compiles a return statement.
         """
         _last_node = self._current_node
-        _statement = self.xml_file.SubElement(self._current_node, 'returnStatement')
+        _statement = ET.SubElement(self._current_node, 'returnStatement')
         self._current_node = _statement
         self.tokenizer.advance()
         self._write_line(_statement, self.tokenizer.keyWord())  # return
@@ -283,7 +288,7 @@ class CompilationEngine:
         Compiles an if statement, possibly with a trailing else clause.
         """
         _last_node = self._current_node
-        _statement = self.xml_file.SubElement(self._current_node, 'ifStatement')
+        _statement = ET.SubElement(self._current_node, 'ifStatement')
         self._current_node = _statement
         self.tokenizer.advance()
         self._write_line(_statement, self.tokenizer.keyWord())  # if
@@ -314,7 +319,7 @@ class CompilationEngine:
         Compiles an expression.
         """
         _last_node = self._current_node
-        self._current_node = self.xml_file.SubElement(self._current_node, 'expression')
+        self._current_node = ET.SubElement(self._current_node, 'expression')
         self.CompileTerm()
         peek = self.tokenizer.peek()
         while peek in OPS:
@@ -333,7 +338,7 @@ class CompilationEngine:
         of [, (, or . suffices to distinguish between the three possibilities. Any other token is not
         part of this term and should not be advanced over.
         """
-        term_branch = self.xml_file.SubElement(self._current_node, 'term')
+        term_branch = ET.SubElement(self._current_node, 'term')
         # self.tokenizer.advance()
         if self.tokenizer.tokenType() == 'INT_CONST' or self.tokenizer.tokenType() == 'KEYWORD':
             self._write_line(term_branch, self.tokenizer.current_token)
@@ -387,7 +392,7 @@ class CompilationEngine:
         Compiles a (possibly empty) comma-separated list of expressions.
         """
         last_node = self._current_node
-        self._current_node = self.xml_file.SubElement(self._current_node, 'expressionList')
+        self._current_node = ET.SubElement(self._current_node, 'expressionList')
         peek = self.tokenizer.peek()
         while peek != ')':
             self.tokenizer.advance()
@@ -396,6 +401,4 @@ class CompilationEngine:
                 self.tokenizer.advance()
             self.CompileExpression()
             peek = self.tokenizer.peek()
-        if not self._current_node.text:
-            self._current_node.text = '\n'
         self._current_node = last_node
