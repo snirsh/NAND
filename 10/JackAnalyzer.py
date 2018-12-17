@@ -1,4 +1,7 @@
 from CompilationEngine import *
+import ntpath
+import sys
+import os
 
 if __name__ == '__main__':
     input_path = sys.argv[1]

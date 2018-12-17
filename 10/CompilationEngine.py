@@ -9,8 +9,6 @@
 # Thus, compilexxx() may only be called if indeed xxx is the next syntactic element of the input.                      #
 #                                                                                                                      #
 ########################################################################################################################
-import ntpath
-import sys
 from lxml import etree as ET
 from JackTokenizer import *
 
