@@ -10,7 +10,7 @@ FILES = JackAnalyzer.py Makefile JackTokenizer.py README JackAnalyzer Compilatio
 
 all:
 	chmod 700 $(FILES)
-	chmod a+x VMtranslator
+	chmod a+x JackAnalyzer
 
 tar:
 	tar -cvf project10.tar $(FILES)
