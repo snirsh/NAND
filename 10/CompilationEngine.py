@@ -21,19 +21,19 @@ UNARY_OP = ['-', '~']
 
 
 class CompilationEngine:
-    def __init__(self, input, output):
+    def __init__(self, input_path, output_path):
         """
         creates a new compilation engine with the given input and output. the next routine called must be compileClass()
-        :param input: input stream/file
-        :param output: output stream/file
+        :param input_path: input stream/file
+        :param output_path: output stream/file
         """
         self._root = None
         self._current_node = None
-        self.tokenizer = JackTokenizer(input)
+        self.tokenizer = JackTokenizer(input_path)
         self.xml_file = ET
         self.CompileClass()
         __tree = self.xml_file.ElementTree(self._root)
-        __tree.write(output, method='xml', pretty_print=True, encoding='utf-8')
+        __tree.write(output_path, method='xml', pretty_print=True, encoding='utf-8')
 
     def CompileClass(self):
         """
