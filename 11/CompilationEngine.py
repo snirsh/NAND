@@ -9,7 +9,6 @@
 # Thus, compilexxx() may only be called if indeed xxx is the next syntactic element of the input.                      #
 #                                                                                                                      #
 ########################################################################################################################
-from lxml import etree as ET
 from JackTokenizer import *
 from SymbolTable import SymbolTable
 from VMWriter import VMWriter
@@ -37,7 +36,7 @@ class CompilationEngine:
         self._if_ct = 0
         self._while_ct = 0
         self._symbols = SymbolTable()
-        self._writer = VMWriter()
+        self._writer = VMWriter(output_path)
         self.CompileClass()
 
     def CompileClass(self):
@@ -303,7 +302,7 @@ class CompilationEngine:
             self.CompileTerm()
             peek = self.tokenizer.peek()
 
-    def CompileTerm(self):  # TODO: VMWRITER Support
+    def CompileTerm(self):
         """
         Compiles a term. This routine is faced with a slight difficulty when trying to decide between some of the
         alternative parsing rules. Specifically, if the current token is an identifier, the routine must distinguish
@@ -311,20 +310,94 @@ class CompilationEngine:
         of [, (, or . suffices to distinguish between the three possibilities. Any other token is not
         part of this term and should not be advanced over.
         """
-        ppass
+        if self.tokenizer.current_token in UNARY_OP:
+            op = self.tokenizer.current_token
+            self.tokenizer.advance()
+            self.CompileTerm()
+            self._writer.write_cmd(op)
+        elif '(' in self.tokenizer.peek():
+            self.tokenizer.advance()  # skip '('
+            self.CompileExpression()
+            self.tokenizer.advance()  # skip ')'
+        elif self.tokenizer.tokenType() == 'INT_CONST':
+            self._writer.push('constant', self.tokenizer.current_token)
+            self.tokenizer.advance()
+        elif self.tokenizer.tokenType() == 'STRING_CONST':
+            self._WriteStringConst()
+        elif self.tokenizer.tokenType() == 'KEYWORD':
+            self._WriteKeyword()
+        else:  # if we got here thus we have a identifier (might be array)
+            self._WriteIdentifier()
 
     def CompileExpressionList(self):
         """
         Compiles a (possibly empty) comma-separated list of expressions.
         """
-        last_node = self._current_node
-        self._current_node = ET.SubElement(self._current_node, 'expressionList')
         peek = self.tokenizer.peek()
+        counter = 0
         while peek != ')':
+            counter += 1
             self.tokenizer.advance()
             if peek == ',':
-                self._write_line(self._current_node, self.tokenizer.symbol())
                 self.tokenizer.advance()
             self.CompileExpression()
             peek = self.tokenizer.peek()
-        self._current_node = last_node
+        return counter
+
+    def _WriteStringConst(self):
+        string_const = self.tokenizer.stringVal()
+        self._writer.push('constant', len(string_const))
+        self._writer.write_call('String.new', 1)
+        for c in string_const:
+            self._writer.push('constant', ord(c))
+            self._writer.write_call('String.appendChar', 2)
+
+    def _WriteKeyword(self):
+        if self.tokenizer.current_token == 'this':
+            self._writer.push('pointer', 0)
+        else:
+            self._writer.push('constant', 0)
+            if self._current_node == 'true':
+                self._writer.write_cmd('neg')
+
+    def _WriteIdentifier(self):
+        peek = self.tokenizer.peek()
+        if peek == '[':
+            name = self.tokenizer.current_token
+            self.tokenizer.advance()
+            self.tokenizer.advance()  # skip '['
+            self.CompileExpression()
+            self.tokenizer.advance()  # skip ']'
+            kind = self._symbols.KindOf(name)
+            index = self._symbols.IndexOf(name)
+            self._writer.push(KINDS_DICT[kind], index)
+            self._writer.write_cmd('add')
+            self._writer.pop('pointer', 1)
+            self._writer.push('that', 0)
+        elif peek == '.' or peek == '(':
+            name = self.tokenizer.current_token
+            self.tokenizer.advance()
+            args = 0
+            if peek == '.':
+                self.tokenizer.advance()  # skip '.'
+                self.tokenizer.advance()
+                name = FUNC_NAME_FORMAT.format(name, self.tokenizer.current_token)
+                type = self._symbols.TypeOf(name)
+                if not type:
+                    kind = self._symbols.KindOf(name)
+                    index = self._symbols.IndexOf(name)
+                    self._writer.push(KINDS_DICT[kind], index)
+                    args += 1
+            else:
+                self.tokenizer.advance()  # skip '('
+                self.tokenizer.advance()
+                name = FUNC_NAME_FORMAT.format(name, self.tokenizer.current_token)
+                self._writer.push('pointer', 0)
+                args += 1
+            args += self.CompileExpressionList()
+            self._writer.write_call(name, args)
+        else:
+            name = self.tokenizer.current_token
+            kind = self._symbols.KindOf(name)
+            index = self._symbols.IndexOf(name)
+            self._writer.push(KINDS_DICT[kind], index)

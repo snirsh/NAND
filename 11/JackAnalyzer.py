@@ -2,12 +2,12 @@ import glob
 import sys
 import os
 
-from VMWriter import *
+from CompilationEngine import CompilationEngine
 
 
 def main():
     if len(sys.argv) != 2:
-        print(' Usage error - please insert file or directory.')
+        print('ERR SYS ARGS')
         return
     input_path = os.path.abspath(sys.argv[1])
     if input_path.endswith('.jack'):
@@ -16,7 +16,7 @@ def main():
         input_path = glob.glob(input_path + '/*.jack')
     for _ in input_path:
         out_vm = _.replace('.jack', '.vm')
-        VMWriter(_, out_vm)
+        CompilationEngine(_, out_vm)
 
 
 if __name__ == '__main__':
