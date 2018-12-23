@@ -88,9 +88,3 @@ class SymbolTable:
         return self._subroutine_scope[name][0]
 
 
-
-if __name__ == '__main__':
-    symb = SymbolTable()
-    print(symb.VarCount('static'))
-    symb.Define('snir','id','field')
-    print(symb.TypeOf('snir'))
