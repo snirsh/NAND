@@ -105,14 +105,6 @@ class JackTokenizer(object):
         returns the character which is the current token. should be called only when tokenType() is SYMBOL
         :return: Char
         """
-        # if self.current_token == '<':
-        #     return '&lt;'
-        # elif self.current_token == '>':
-        #     return '&gt;'
-        # elif self.current_token == '"':
-        #     return '&quot;'
-        # elif self.current_token == '&':
-        #     return '&amp;'
         return self.current_token
 
     def identifier(self):
@@ -141,13 +133,3 @@ class JackTokenizer(object):
         for line in self.__lines:
             for token in reg.findall(line):
                 self.tokens.append(token)
-        # root = ET.Element('tokens')
-        # while self.hasMoreTokens():
-        #     self.advance()
-        #     token_type = TYPES[self.tokenType()]
-        #     if token_type == 'stringConstant':
-        #         ET.SubElement(root, token_type).text = ' ' + self.current_token.strip('"') + ' '
-        #     else:
-        #         ET.SubElement(root, token_type).text = ' ' + self.current_token + ' '
-        # tree = ET.ElementTree(root)
-        # tree.write(self.__file_name + 'T.xml', pretty_print=True)

@@ -311,53 +311,7 @@ class CompilationEngine:
         of [, (, or . suffices to distinguish between the three possibilities. Any other token is not
         part of this term and should not be advanced over.
         """
-        if self.tokenizer.tokenType() == 'INT_CONST':
-            val = self.tokenizer.current_token
-            self._writer.push('constant', val)
-        elif self.tokenizer.tokenType() == 'KEYWORD':
-            pass
-        elif self.tokenizer.tokenType() == 'STRING_CONST':
-            str_const = self.tokenizer.stringVal()
-            self._writer.push('constant', len(str_const))
-            self._writer.write_call('String.new', 1)
-            for c in str_const:
-                self._writer.push('constant', ord(c))
-                self._writer.write_call('String.appendChar', 2)
-        elif self.tokenizer.current_token in UNARY_OP:
-            op = self.tokenizer.symbol()
-            self.tokenizer.advance()
-            self.CompileTerm()
-            self._writer.write_cmd(op)
-        elif self.tokenizer.current_token in SYMBOLS:
-            self.tokenizer.advance()
-            self.CompileExpression()
-            self.tokenizer.advance()
-        else:
-            self._write_line(term_branch, self.tokenizer.identifier())
-            peek = self.tokenizer.peek()
-            if '[' in peek or '(' in peek:
-                self.tokenizer.advance()
-                self._write_line(term_branch, self.tokenizer.symbol())
-                self.tokenizer.advance()
-                last_node = self._current_node
-                self._current_node = term_branch
-                self.CompileExpression()
-                self._current_node = last_node
-                self.tokenizer.advance()
-                self._write_line(term_branch, self.tokenizer.symbol())
-            elif '.' in peek:
-                self.tokenizer.advance()
-                self._write_line(term_branch, self.tokenizer.symbol())
-                self.tokenizer.advance()
-                self._write_line(term_branch, self.tokenizer.identifier())
-                self.tokenizer.advance()
-                self._write_line(term_branch, self.tokenizer.symbol())
-                last_node = self._current_node
-                self._current_node = term_branch
-                self.CompileExpressionList()
-                self._current_node = last_node
-                self.tokenizer.advance()
-                self._write_line(term_branch, self.tokenizer.symbol())
+        ppass
 
     def CompileExpressionList(self):
         """
