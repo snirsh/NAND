@@ -1,7 +1,8 @@
 import glob
 import sys
+import os
 
-from CompilationEngine import *
+from VMWriter import *
 
 
 def main():
@@ -14,8 +15,8 @@ def main():
     else:
         input_path = glob.glob(input_path + '/*.jack')
     for _ in input_path:
-        out_xml = _.replace('.jack', '.xml')
-        CompilationEngine(_, out_xml)
+        out_vm = _.replace('.jack', '.vm')
+        VMWriter(_, out_vm)
 
 
 if __name__ == '__main__':

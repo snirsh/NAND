@@ -7,6 +7,7 @@
 # The symbol table for jack programs has two nested scopes Class/Subroutine                                            #
 ########################################################################################################################
 
+
 class SymbolTable:
 
     def __init__(self):
