@@ -11,6 +11,7 @@
 ########################################################################################################################
 from lxml import etree as ET
 from JackTokenizer import *
+from SymbolTable import SymbolTable
 
 TYPES = {'KEYWORD': 'keyword', 'SYMBOL': 'symbol', 'IDENTIFIER': 'identifier', 'INT_CONST': 'integerConstant',
          'STRING_CONST': 'stringConstant', 'INVALID_TOKEN_TYPE': 'INVALID_TOKEN_TYPE'}
@@ -28,30 +29,25 @@ class CompilationEngine:
         self._root = None
         self._current_node = None
         self.tokenizer = JackTokenizer(input_path)
+        self._class_name = ''
+        self._if_ct = 0
+        self._while_ct = 0
+        self._symbols = SymbolTable()
         self.CompileClass()
-        for elem in self._root.iter():
-            if elem.tag == 'expressionList' or elem.tag == 'parameterList':
-                if "/>" in str(ET.tostring(elem)):
-                    elem.text = '\n'
-        p = ET.XMLParser(remove_blank_text=True)
-        tree = ET.ElementTree(self._root, parser=p)
-        tree.write(output_path, method='xml', pretty_print=True)
 
     def CompileClass(self):
         """
         Compiles a complete class.
         """
-        self._root = ET.Element('class')
+        # self._root = ET.Element('class')
+        # self._write_line(self._root, self.tokenizer.keyWord())
+        self.tokenizer.advance()  # skip the keyword class
         self.tokenizer.advance()
-        self._write_line(self._root, self.tokenizer.keyWord())
-        self.tokenizer.advance()
-        self._write_line(self._root, self.tokenizer.identifier())
-        self.tokenizer.advance()
-        self._write_line(self._root, self.tokenizer.symbol())
+        self._class_name = self.tokenizer.identifier()
+        self.tokenizer.advance()  # skip '{'
         self.CompileClassVarDec()
         self.CompileSubroutine()
-        self.tokenizer.advance()
-        self._write_line(self._root, self.tokenizer.symbol())
+        self.tokenizer.advance()  # skip '}' and end the class compilation
 
     def _write_line(self, node, name):
         """
@@ -66,114 +62,94 @@ class CompilationEngine:
         Compiles a static declaration or a field declaration.
         """
         peek = self.tokenizer.peek()
-        if 'static' in peek or 'field' in peek:
-            _classVarNode = ET.SubElement(self._root, 'classVarDec')
         while 'static' in peek or 'field' in peek:
             self.tokenizer.advance()
-            self._write_line(_classVarNode, self.tokenizer.keyWord())  # field/static
+            kind = self.tokenizer.keyWord()  # field/static
             self.tokenizer.advance()
-            self._write_line(_classVarNode, self.tokenizer.keyWord())  # type
+            type = self.tokenizer.keyWord()  # type
             self.tokenizer.advance()
-            self._write_line(_classVarNode, self.tokenizer.identifier())  # name
+            name = self.tokenizer.identifier()  # name
             self.tokenizer.advance()
+            self._symbols.Define(name, type, kind)
             while self.tokenizer.symbol() == ',':
-                self._write_line(_classVarNode, self.tokenizer.symbol())  # ,
+                self.tokenizer.advance()  # skip ','
+                self._symbols.Define(self.tokenizer.identifier(), type, kind)  # name
                 self.tokenizer.advance()
-                self._write_line(_classVarNode, self.tokenizer.identifier())  # name
-                self.tokenizer.advance()
-            self._write_line(_classVarNode, self.tokenizer.symbol())  # ;
-            peek = self.tokenizer.peek()
-            if 'static' in peek or 'field' in peek:
-                _classVarNode = ET.SubElement(self._root, 'classVarDec')
+            peek = self.tokenizer.peek()  # skip ';'
 
     def CompileSubroutine(self):
         """
         Compiles a complete method, function, or constructor.
         """
-        _last_node = self._current_node
-        _subroutineNode = ET.SubElement(self._root, 'subroutineDec')
-        self._current_node = _subroutineNode
         peek = self.tokenizer.peek()
         while 'function' in peek or 'constructor' in peek or 'method' in peek:
+            self._symbols.startSubroutine()
             self.tokenizer.advance()
-            self._write_line(_subroutineNode, self.tokenizer.keyWord())  # const/func/method
+            # kind = self.tokenizer.keyWord()  # const/func/method
             self.tokenizer.advance()
-            self._write_line(_subroutineNode, self.tokenizer.current_token)  # void/type
+            # type = self.tokenizer.current_token  # void/type
             self.tokenizer.advance()
-            self._write_line(_subroutineNode, self.tokenizer.identifier())  # name
-            self.tokenizer.advance()
-            self._write_line(_subroutineNode, self.tokenizer.symbol())  # '('
+            # name = self.tokenizer.identifier()  # name
+            # self._symbols.Define(name, type, kind)
+            self.tokenizer.advance()  # skip '('
             self.CompileParameterList()
-            self.tokenizer.advance()
-            self._write_line(_subroutineNode, self.tokenizer.symbol())  # ')'
-            self.tokenizer.advance()
-            self._current_node = ET.SubElement(_subroutineNode, 'subroutineBody')
-            self._write_line(self._current_node, self.tokenizer.symbol())  # '{'
+            self.tokenizer.advance()  # skip ')'
+            self.tokenizer.advance()  # skip '{'
             peek = self.tokenizer.peek()
             if 'var' in peek:
                 self.CompileVarDec()
             self.CompileStatements()
-            self.tokenizer.advance()
-            self._write_line(self._current_node, self.tokenizer.symbol())  # '}'
-            peek = self.tokenizer.peek()
-            if 'function' in peek or 'constructor' in peek or 'method' in peek:
-                _subroutineNode = ET.SubElement(self._root, 'subroutineDec')
-                self._current_node = _subroutineNode
+            self.tokenizer.advance()  # skip '}'
 
-    def CompileParameterList(self):
+    def CompileParameterList(self):  # TODO : VM_WRITER of function name
         """
         Compiles a (possibly empty) parameter list, not including the enclosing ()
         """
-        param_list = ET.SubElement(self._current_node, 'parameterList')
+        # param_list = ET.SubElement(self._current_node, 'parameterList')
+        kind = 'argument'
         peek = self.tokenizer.peek()
         if peek != ')':
             self.tokenizer.advance()
-            self._write_line(param_list, self.tokenizer.keyWord())  # type
+            type = self.tokenizer.keyWord()  # type
             self.tokenizer.advance()
-            self._write_line(param_list, self.tokenizer.identifier())  # name
+            name = self.tokenizer.identifier()  # name
             peek = self.tokenizer.peek()
+            self._symbols.Define(name, type, kind)
         while peek == ',':
             self.tokenizer.advance()
-            self._write_line(param_list, self.tokenizer.symbol())  # ','
+            self.tokenizer.advance()  # skip ','
+            type = self.tokenizer.keyWord()  # type
             self.tokenizer.advance()
-            self._write_line(param_list, self.tokenizer.keyWord())  # type
-            self.tokenizer.advance()
-            self._write_line(param_list, self.tokenizer.identifier())  # name
+            name = self.tokenizer.identifier()  # name
             peek = self.tokenizer.peek()
-        # if not param_list.text:
-        #     param_list.text = '\n'
+            self._symbols.Define(name, type, kind)
 
     def CompileVarDec(self):
         """
         Compiles a var declaration.
         """
-        _varDecNode = ET.SubElement(self._current_node, 'varDec')
         peek = self.tokenizer.peek()
         while 'var' in peek:
             self.tokenizer.advance()
-            self._write_line(_varDecNode, self.tokenizer.keyWord())
+            type = self.tokenizer.keyWord()
             self.tokenizer.advance()
-            self._write_line(_varDecNode, self.tokenizer.keyWord())
+            kind = self.tokenizer.keyWord()
             self.tokenizer.advance()
-            self._write_line(_varDecNode, self.tokenizer.identifier())
+            name = self.tokenizer.identifier()
             self.tokenizer.advance()
+            self._symbols.Define(name, type, kind)
             while self.tokenizer.symbol() == ',':
-                self._write_line(_varDecNode, self.tokenizer.symbol())  # ,
+                self.tokenizer.advance()  # skip ','
+                name = self.tokenizer.identifier()  # name
                 self.tokenizer.advance()
-                self._write_line(_varDecNode, self.tokenizer.identifier())  # name
-                self.tokenizer.advance()
-            self._write_line(_varDecNode, self.tokenizer.symbol())  # ;
+                self._symbols.Define(name, type, kind)
             peek = self.tokenizer.peek()
-            if peek == 'var':
-                _varDecNode = ET.SubElement(self._current_node, 'varDec')
 
-    def CompileStatements(self):
+    def CompileStatements(self):  # TODO: add VM to each ones
         """
         Compiles a sequence of statements, not including the enclosing "{}"
         """
         peek = self.tokenizer.peek()
-        _parent = self._current_node
-        self._current_node = ET.SubElement(self._current_node, 'statements')
         while 'let' in peek or 'if' in peek or 'while' in peek or 'do' in peek or 'return' in peek:
             if 'let' in peek:
                 self.CompileLet()
@@ -186,93 +162,62 @@ class CompilationEngine:
             elif 'return' in peek:
                 self.CompileReturn()
             peek = self.tokenizer.peek()
-        self._current_node = _parent
 
     def CompileDo(self):
         """
         Compiles a do statement.
         """
-        _last_node = self._current_node
-        _statement = ET.SubElement(self._current_node, 'doStatement')
-        self._current_node = _statement
+        self.tokenizer.advance()  # skip 'do' statement
         self.tokenizer.advance()
-        self._write_line(_statement, self.tokenizer.keyWord())
-        self.tokenizer.advance()
-        self._write_line(_statement, self.tokenizer.identifier())
+        name = self.tokenizer.identifier()  # name of what to call
         peek = self.tokenizer.peek()
         while peek == '.':
+            self.tokenizer.advance()  # skip '.'
+            name += '.'
             self.tokenizer.advance()
-            self._write_line(_statement, self.tokenizer.symbol())
-            self.tokenizer.advance()
-            self._write_line(_statement, self.tokenizer.identifier())
+            name += self.tokenizer.identifier()
             peek = self.tokenizer.peek()
-        self.tokenizer.advance()
-        self._write_line(_statement, self.tokenizer.symbol())  # '('
+        self.tokenizer.advance()  # skip '('
         self.CompileExpressionList()
-        self.tokenizer.advance()
-        self._write_line(_statement, self.tokenizer.symbol())  # ')'
-        self.tokenizer.advance()
-        self._write_line(_statement, self.tokenizer.symbol())  # ';'
-        self._current_node = _last_node
+        self.tokenizer.advance()  # skip ')'
+        self.tokenizer.advance()  # skip ';
 
     def CompileLet(self):
         """
         Compiles a let statement.
         """
-        _last_node = self._current_node
-        _statement = ET.SubElement(self._current_node, 'letStatement')
-        self._current_node = _statement
+        self.tokenizer.advance()  # skip 'let'
         self.tokenizer.advance()
-        self._write_line(_statement, self.tokenizer.keyWord())
-        self.tokenizer.advance()
-        self._write_line(_statement, self.tokenizer.identifier())
+        name = self.tokenizer.identifier()
         peek = self.tokenizer.peek()
         if peek == '[':
-            self.tokenizer.advance()
-            self._write_line(_statement, self.tokenizer.symbol())  # '['
+            self.tokenizer.advance()  # skip '['
             self.tokenizer.advance()
             self.CompileExpression()
-            self.tokenizer.advance()
-            self._write_line(_statement, self.tokenizer.symbol())  # ']'
-        self.tokenizer.advance()
-        self._write_line(_statement, self.tokenizer.symbol())  # '='
+            self.tokenizer.advance()  # skip ']'
+        self.tokenizer.advance()  # skip '='
         self.tokenizer.advance()
         self.CompileExpression()
-        self.tokenizer.advance()
-        self._write_line(_statement, self.tokenizer.symbol())  # ';'
-        self._current_node = _last_node
+        self.tokenizer.advance()  # skip ';'
 
     def CompileWhile(self):
         """
         Compiles a while statement.
         """
-        _last_node = self._current_node
-        _statement = ET.SubElement(self._current_node, 'whileStatement')
-        self._current_node = _statement
+        self.tokenizer.advance()  # skip while
         self.tokenizer.advance()
-        self._write_line(_statement, self.tokenizer.keyWord())  # while
-        self.tokenizer.advance()
-        self._write_line(_statement, self.tokenizer.symbol())  # '('
-        self.tokenizer.advance()
+        self.tokenizer.advance()  # skip '('
         self.CompileExpression()
         self.tokenizer.advance()
-        self._write_line(_statement, self.tokenizer.symbol())  # ')'
-        self.tokenizer.advance()
-        self._write_line(_statement, self.tokenizer.symbol())  # '{'
+        self.tokenizer.advance()  # skip '){'
         self.CompileStatements()
-        self.tokenizer.advance()
-        self._write_line(_statement, self.tokenizer.symbol())  # '}'
-        self._current_node = _last_node
+        self.tokenizer.advance()  # skip '}'
 
     def CompileReturn(self):
         """
         Compiles a return statement.
         """
-        _last_node = self._current_node
-        _statement = ET.SubElement(self._current_node, 'returnStatement')
-        self._current_node = _statement
-        self.tokenizer.advance()
-        self._write_line(_statement, self.tokenizer.keyWord())  # return
+        self.tokenizer.advance()    # skip 'return'
         peek = self.tokenizer.peek()
         if peek != ';':
             self.tokenizer.advance()
@@ -280,8 +225,6 @@ class CompilationEngine:
             self.tokenizer.advance()
         else:
             self.tokenizer.advance()
-        self._write_line(self._current_node, self.tokenizer.symbol())  # ';'
-        self._current_node = _last_node
 
     def CompileIf(self):
         """
@@ -291,46 +234,33 @@ class CompilationEngine:
         _statement = ET.SubElement(self._current_node, 'ifStatement')
         self._current_node = _statement
         self.tokenizer.advance()
-        self._write_line(_statement, self.tokenizer.keyWord())  # if
-        self.tokenizer.advance()
-        self._write_line(_statement, self.tokenizer.symbol())  # '('
-        self.tokenizer.advance()
+        self.tokenizer.advance()    # skip if
+        self.tokenizer.advance()    # skip '('
         self.CompileExpression()
-        self.tokenizer.advance()
-        self._write_line(_statement, self.tokenizer.symbol())  # ')'
-        self.tokenizer.advance()
-        self._write_line(_statement, self.tokenizer.symbol())  # '{'
+        self.tokenizer.advance()    # skip ')'
+        self.tokenizer.advance()    # skip '{'
         self.CompileStatements()
-        self.tokenizer.advance()
-        self._write_line(_statement, self.tokenizer.symbol())  # '}'
+        self.tokenizer.advance()    # skip '}'
         peek = self.tokenizer.peek()
         if peek == 'else':
             self.tokenizer.advance()
-            self._write_line(_statement, self.tokenizer.keyWord())  # else
-            self.tokenizer.advance()
-            self._write_line(_statement, self.tokenizer.symbol())  # '{'
+            self.tokenizer.advance()    # skip 'else{'
             self.CompileStatements()
-            self.tokenizer.advance()
-            self._write_line(_statement, self.tokenizer.symbol())  # '}'
-        self._current_node = _last_node
+            self.tokenizer.advance()    # skip '}'
 
-    def CompileExpression(self):
+    def CompileExpression(self):    # TODO: VMWRITER Support
         """
         Compiles an expression.
         """
-        _last_node = self._current_node
-        self._current_node = ET.SubElement(self._current_node, 'expression')
         self.CompileTerm()
         peek = self.tokenizer.peek()
         while peek in OPS:
             self.tokenizer.advance()
-            self._write_line(self._current_node, self.tokenizer.symbol())
-            self.tokenizer.advance()
+            self.tokenizer.advance()    # 'op'
             self.CompileTerm()
             peek = self.tokenizer.peek()
-        self._current_node = _last_node
 
-    def CompileTerm(self):
+    def CompileTerm(self):  # TODO: VMWRITER Support
         """
         Compiles a term. This routine is faced with a slight difficulty when trying to decide between some of the
         alternative parsing rules. Specifically, if the current token is an identifier, the routine must distinguish
