@@ -16,21 +16,21 @@ class SymbolTable:
         """
         self._class_scope = {}
         self._subroutine_scope = {}
-        self._var_ct = 0
-        self._static_ct = 0
-        self._field_ct = 0
-        self._arg_ct = 0
-        self._CTS = {'static': locals()['self']._static_ct, 'var': locals()['self']._var_ct,
-                 'arg': locals()['self']._arg_ct,
-                 'field': locals()['self']._field_ct}
+        self.var_ct = 0
+        self.static_ct = 0
+        self.field_ct = 0
+        self.arg_ct = 0
+        self.CTS = {'static': locals()['self'].static_ct, 'var': locals()['self'].var_ct,
+                 'argument': locals()['self'].arg_ct,
+                 'field': locals()['self'].field_ct}
 
     def startSubroutine(self):
         """
         starts a new subroutine scope (i.e, resets the subroutine's symbol table)
         """
         self._subroutine_scope = {}
-        self._arg_ct = 0
-        self._var_ct = 0
+        self.arg_ct = 0
+        self.var_ct = 0
 
     def Define(self, name, type, kind):
         """
@@ -40,8 +40,8 @@ class SymbolTable:
         :param id_type: String
         :param kind: (STATIC,FIELD,ARG, VAR)
         """
-        index = self._CTS[kind]
-        self._CTS[kind] += 1
+        index = self.CTS[kind]
+        self.CTS[kind] += 1
         if kind == 'static' or kind == 'field':
             self._class_scope[name] = (index, type, kind)
         else:   # arg or var
@@ -53,7 +53,7 @@ class SymbolTable:
         :param kind: (STATIC,FIELD,ARG, VAR)
         :return: int
         """
-        return self._CTS[kind]
+        return self.CTS[kind]
 
     def KindOf(self, name):
         """
@@ -76,7 +76,9 @@ class SymbolTable:
         """
         if name in self._class_scope.keys():
             return self._class_scope[name][1]
-        return self._subroutine_scope[name][1]
+        elif name in self._subroutine_scope.keys():
+            return self._subroutine_scope[name][1]
+        return None
 
     def IndexOf(self, name):
         """

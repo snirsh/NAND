@@ -81,7 +81,7 @@ class CompilationEngine:
             self.tokenizer.advance()
             kind = self.tokenizer.keyWord()  # const/func/method
             if kind == 'constructor':
-                self._writer.push('constant', self._symbols._field_ct)
+                self._writer.push('constant', self._symbols.field_ct)
                 self._writer.write_call('Memory.alloc', 1)
                 self._writer.pop('pointer', 0)
             elif kind == 'method':
@@ -92,9 +92,9 @@ class CompilationEngine:
             func_name = self.tokenizer.identifier()  # name
             self.tokenizer.advance()  # skip '('
             self.CompileParameterList()
-            var_ct = self._symbols._var_ct
-            name = FUNC_NAME_FORMAT.format(func_name, self._class_name)
-            self._writer.write_function(name, var_ct)
+            arg_ct = self._symbols.arg_ct
+            name = FUNC_NAME_FORMAT.format(self._class_name, func_name)
+            self._writer.write_function(name, arg_ct)
             self.tokenizer.advance()  # skip ')'
             self.tokenizer.advance()  # skip '{'
             peek = self.tokenizer.peek()
@@ -133,9 +133,9 @@ class CompilationEngine:
         peek = self.tokenizer.peek()
         while 'var' in peek:
             self.tokenizer.advance()
-            type = self.tokenizer.keyWord()
-            self.tokenizer.advance()
             kind = self.tokenizer.keyWord()
+            self.tokenizer.advance()
+            type = self.tokenizer.keyWord()
             self.tokenizer.advance()
             name = self.tokenizer.identifier()
             self.tokenizer.advance()
@@ -315,7 +315,7 @@ class CompilationEngine:
             self.tokenizer.advance()
             self.CompileTerm()
             self._writer.write_cmd(op)
-        elif '(' in self.tokenizer.peek():
+        elif '(' in self.tokenizer.current_token:
             self.tokenizer.advance()  # skip '('
             self.CompileExpression()
             self.tokenizer.advance()  # skip ')'
@@ -361,6 +361,7 @@ class CompilationEngine:
                 self._writer.write_cmd('neg')
 
     def _WriteIdentifier(self):
+        self.tokenizer.advance()
         peek = self.tokenizer.peek()
         if peek == '[':
             name = self.tokenizer.current_token
@@ -376,14 +377,13 @@ class CompilationEngine:
             self._writer.push('that', 0)
         elif peek == '.' or peek == '(':
             name = self.tokenizer.current_token
-            self.tokenizer.advance()
             args = 0
             if peek == '.':
                 self.tokenizer.advance()  # skip '.'
                 self.tokenizer.advance()
                 name = FUNC_NAME_FORMAT.format(name, self.tokenizer.current_token)
                 type = self._symbols.TypeOf(name)
-                if not type:
+                if type:
                     kind = self._symbols.KindOf(name)
                     index = self._symbols.IndexOf(name)
                     self._writer.push(KINDS_DICT[kind], index)
@@ -394,8 +394,10 @@ class CompilationEngine:
                 name = FUNC_NAME_FORMAT.format(name, self.tokenizer.current_token)
                 self._writer.push('pointer', 0)
                 args += 1
+            self.tokenizer.advance()
             args += self.CompileExpressionList()
             self._writer.write_call(name, args)
+            self.tokenizer.advance()
         else:
             name = self.tokenizer.current_token
             kind = self._symbols.KindOf(name)
