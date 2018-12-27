@@ -147,7 +147,7 @@ class CompilationEngine:
                 self._symbols.Define(name, type, kind)
             peek = self.tokenizer.peek()
 
-    def CompileStatements(self):  # TODO: add VM to each ones
+    def CompileStatements(self):
         """
         Compiles a sequence of statements, not including the enclosing "{}"
         """
