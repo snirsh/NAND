@@ -189,32 +189,49 @@ class CompilationEngine:
         """
         Compiles a let statement.
         """
-        self.tokenizer.advance()  # skip 'let'
+        # self.tokenizer.advance()  # skip 'let'
+        # self.tokenizer.advance()
+        # name = self.tokenizer.identifier()
+        # kind = self._symbols.KindOf(name)
+        # index = self._symbols.IndexOf(name)
+        # peek = self.tokenizer.peek()
+        # if peek == '[':
+        #     self.tokenizer.advance()  # skip '['
+        #     self.tokenizer.advance()
+        #     self.CompileExpression()
+        #     self.tokenizer.advance()  # skip ']'
+        #     self._writer.push(KINDS_DICT[kind], index)
+        #     self._writer.write_cmd('add')
+        #     self._writer.pop('temp', 0)
+        #     self.tokenizer.advance()  # skip '='
+        #     self.tokenizer.advance()
+        #     self.CompileExpression()
+        #     self.tokenizer.advance()  # skip ';'
+        #     self._writer.push('temp', 0)
+        #     self._writer.pop('pointer', 1)
+        #     self._writer.pop('that', 0)
+        # else:
+        #     self.tokenizer.advance()  # skip '='
+        #     self.CompileExpression()
+        #     if ';' not in self.tokenizer.current_token:
+        #         self.tokenizer.advance()  # skip ';'
+        #     self._writer.pop(KINDS_DICT[kind], index)
+        self.tokenizer.advance()
         self.tokenizer.advance()
         name = self.tokenizer.identifier()
         kind = self._symbols.KindOf(name)
         index = self._symbols.IndexOf(name)
         peek = self.tokenizer.peek()
         if peek == '[':
-            self.tokenizer.advance()  # skip '['
+            self.tokenizer.advance()
             self.tokenizer.advance()
             self.CompileExpression()
-            self.tokenizer.advance()  # skip ']'
-            self._writer.push(KINDS_DICT[kind], index)
-            self._writer.write_cmd('add')
-            self._writer.pop('temp', 0)
-            self.tokenizer.advance()  # skip '='
             self.tokenizer.advance()
-            self.CompileExpression()
-            self.tokenizer.advance()  # skip ';'
-            self._writer.push('temp', 0)
-            self._writer.pop('pointer', 1)
-            self._writer.pop('that', 0)
-        else:
-            self.tokenizer.advance()  # skip '='
-            self.CompileExpression()
-            self.tokenizer.advance()  # skip ';'
-            self._writer.pop(KINDS_DICT[kind], index)
+        self.tokenizer.advance()
+        self.tokenizer.advance()
+        self.CompileExpression()
+        self.tokenizer.advance()
+        self._writer.pop(KINDS_DICT[kind], index)
 
     def CompileWhile(self):
         """
@@ -310,8 +327,12 @@ class CompilationEngine:
         of [, (, or . suffices to distinguish between the three possibilities. Any other token is not
         part of this term and should not be advanced over.
         """
-        if self.tokenizer.current_token in UNARY_OP:
-            op = self.tokenizer.current_token
+        if self.tokenizer.tokenType() == 'INT_CONST' or self.tokenizer.tokenType() == 'KEYWORD':
+            self._WriteKeyword()
+        elif self.tokenizer.tokenType() == 'STRING_CONST':
+            self._WriteStringConst()
+        elif self.tokenizer.current_token in UNARY_OP:
+            op = self.tokenizer.symbol()
             self.tokenizer.advance()
             self.CompileTerm()
             self._writer.write_cmd(op)
@@ -327,7 +348,49 @@ class CompilationEngine:
         elif self.tokenizer.tokenType() == 'KEYWORD':
             self._WriteKeyword()
         else:  # if we got here thus we have a identifier (might be array)
-            self._WriteIdentifier()
+            peek = self.tokenizer.peek()
+            if '[' in peek:
+                name = self.tokenizer.current_token
+                self.tokenizer.advance()  # skip brackets
+                self.tokenizer.advance()
+                self.CompileExpression()
+                self.tokenizer.advance()
+                kind = self._symbols.KindOf(name)
+                index = self._symbols.IndexOf(name)
+                self._writer.push(KINDS_DICT[kind], index)
+                self._writer.write_cmd('add')
+                self._writer.pop('pointer', 1)
+                self._writer.push('that', 0)
+            if '(' in peek:
+                name = self.tokenizer.current_token
+                kind = self._symbols.KindOf(name)
+                index = self._symbols.IndexOf(name)
+                args = 1
+                self._writer.push('pointer', 0)
+                self.tokenizer.advance()  # skip brackets
+                self.tokenizer.advance()
+                self._writer.push(kind, index)
+                args += self.CompileExpressionList()
+                self.tokenizer.advance()
+                self._writer.write_call(name, args)
+            elif '.' in peek:
+                args = 0
+                name = self.tokenizer.current_token
+                self.tokenizer.advance()
+                self.tokenizer.advance()  # skip '.'
+                full_name = FUNC_NAME_FORMAT.format(name, self.tokenizer.current_token)
+                type = self._symbols.TypeOf(full_name)
+                kind = self._symbols.KindOf(full_name)
+                index = self._symbols.IndexOf(full_name)
+                if not type:
+                    kind = KINDS_DICT[kind]
+                    self._writer.push(kind, index)
+                    args += 1
+                self.tokenizer.advance()  # skip brackets
+                self.tokenizer.advance()
+                args += self.CompileExpressionList()
+                self.tokenizer.advance()
+                self._writer.write_call(full_name, args)
 
     def CompileExpressionList(self):
         """
@@ -335,11 +398,9 @@ class CompilationEngine:
         """
         peek = self.tokenizer.peek()
         counter = 0
-        while peek != ')':
+        while peek != ')' and peek != ';':
             counter += 1
             self.tokenizer.advance()
-            if peek == ',':
-                self.tokenizer.advance()
             self.CompileExpression()
             peek = self.tokenizer.peek()
         return counter
@@ -359,47 +420,3 @@ class CompilationEngine:
             self._writer.push('constant', 0)
             if self._current_node == 'true':
                 self._writer.write_cmd('neg')
-
-    def _WriteIdentifier(self):
-        self.tokenizer.advance()
-        peek = self.tokenizer.peek()
-        if peek == '[':
-            name = self.tokenizer.current_token
-            self.tokenizer.advance()
-            self.tokenizer.advance()  # skip '['
-            self.CompileExpression()
-            self.tokenizer.advance()  # skip ']'
-            kind = self._symbols.KindOf(name)
-            index = self._symbols.IndexOf(name)
-            self._writer.push(KINDS_DICT[kind], index)
-            self._writer.write_cmd('add')
-            self._writer.pop('pointer', 1)
-            self._writer.push('that', 0)
-        elif peek == '.' or peek == '(':
-            name = self.tokenizer.current_token
-            args = 0
-            if peek == '.':
-                self.tokenizer.advance()  # skip '.'
-                self.tokenizer.advance()
-                name = FUNC_NAME_FORMAT.format(name, self.tokenizer.current_token)
-                type = self._symbols.TypeOf(name)
-                if type:
-                    kind = self._symbols.KindOf(name)
-                    index = self._symbols.IndexOf(name)
-                    self._writer.push(KINDS_DICT[kind], index)
-                    args += 1
-            else:
-                self.tokenizer.advance()  # skip '('
-                self.tokenizer.advance()
-                name = FUNC_NAME_FORMAT.format(name, self.tokenizer.current_token)
-                self._writer.push('pointer', 0)
-                args += 1
-            self.tokenizer.advance()
-            args += self.CompileExpressionList()
-            self._writer.write_call(name, args)
-            self.tokenizer.advance()
-        else:
-            name = self.tokenizer.current_token
-            kind = self._symbols.KindOf(name)
-            index = self._symbols.IndexOf(name)
-            self._writer.push(KINDS_DICT[kind], index)
