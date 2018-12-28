@@ -12,5 +12,10 @@ class CodeGenerator:
         cp = CompilationEngine(input_path)
         self.tree = cp.tree
         self._symbols = SymbolTable()
-        self._writer = VMWriter()
+        # self._writer = VMWriter()
+        self.parse()
+
+    def parse(self):
+        for elem in self.tree.iter():
+            continue
 
