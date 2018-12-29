@@ -8,86 +8,63 @@
 ########################################################################################################################
 
 
-class SymbolTable:
+from collections import namedtuple
 
-    def __init__(self):
-        """
-        create a new empty symbol table
-        """
-        self._class_scope = {}
-        self._subroutine_scope = {}
-        self.var_ct = 0
-        self.static_ct = 0
-        self.field_ct = 0
-        self.arg_ct = 0
-        self.CTS = {'static': locals()['self'].static_ct, 'var': locals()['self'].var_ct,
-                 'argument': locals()['self'].arg_ct,
-                 'field': locals()['self'].field_ct}
-
-    def startSubroutine(self):
-        """
-        starts a new subroutine scope (i.e, resets the subroutine's symbol table)
-        """
-        self._subroutine_scope = {}
-        self.arg_ct = 0
-        self.var_ct = 0
-
-    def Define(self, name, type, kind):
-        """
-        defines a new identifier of a given name type and kind and assigns it a running index STATIC and FIELD
-        identifiers have a class scope while ARG and VAR identifiers have a subroutine scope
-        :param name: String
-        :param id_type: String
-        :param kind: (STATIC,FIELD,ARG, VAR)
-        """
-        index = self.CTS[kind]
-        self.CTS[kind] += 1
-        if kind == 'static' or kind == 'field':
-            self._class_scope[name] = (index, type, kind)
-        else:   # arg or var
-            self._subroutine_scope[name] = (index, type, kind)
-
-    def VarCount(self, kind):
-        """
-        Returns the number of variables of the given kind already defined in the current scope.
-        :param kind: (STATIC,FIELD,ARG, VAR)
-        :return: int
-        """
-        return self.CTS[kind]
-
-    def KindOf(self, name):
-        """
-        Returns the kind of the named identifier in the current scope. if the identifier is unknown in the current
-        scope, returns NONE
-        :param name: String
-        :return: (STATIC,FIELD,ARG, VAR, NONE)
-        """
-        if name in self._class_scope.keys():
-            return self._class_scope[name][2]
-        elif name in self._subroutine_scope.keys():
-            return self._subroutine_scope[name][2]
-        return None
-
-    def TypeOf(self, name):
-        """
-        returns the type of the named identifier in the current scope.
-        :param name: String
-        :return: String
-        """
-        if name in self._class_scope.keys():
-            return self._class_scope[name][1]
-        elif name in self._subroutine_scope.keys():
-            return self._subroutine_scope[name][1]
-        return None
-
-    def IndexOf(self, name):
-        """
-        returns the index assigned to the named identifier
-        :param name: String
-        :return: int
-        """
-        if name in self._class_scope.keys():
-            return self._class_scope[name][0]
-        return self._subroutine_scope[name][0]
+JackSymbol = namedtuple('Symbol', ['kind', 'type', 'id'])
 
 
+class JackClass:
+    """A Jack class representation for the Jack compiler"""
+
+    def __init__(self, class_name_input):
+        self.class_name = class_name_input
+        self.symbols = {}
+        self.static_symbols = 0
+        self.field_symbols = 0
+
+    def add_var(self, name, var_type, kind):
+        """Add a class var symbol to the class"""
+        if kind == 'field':
+            self.symbols[name] = JackSymbol('field', var_type, self.field_symbols)
+            self.field_symbols += 1
+        elif kind == 'static':
+            self.symbols[name] = JackSymbol('static', var_type, self.static_symbols)
+            self.static_symbols += 1
+
+    def get_symbol(self, name):
+        """Get a symbol from the class"""
+        return self.symbols.get(name)
+
+
+class JackSubroutine:
+    """A Jack subroutine representation for the Jack compiler"""
+
+    def __init__(self, name, subroutine_type, return_type, jack_class):
+        self.name = name
+        self.jack_class = jack_class
+        self.subroutine_type = subroutine_type
+        self.return_type = return_type
+        self.symbols = {}
+        self.args_c = 0
+        self.var_c = 0
+
+        if subroutine_type == 'method':
+            self.add_arg('this', self.jack_class.class_name)
+
+    def add_arg(self, name, var_type):
+        """Add an arg symbol to the class"""
+        self.symbols[name] = JackSymbol('arg', var_type, self.args_c)
+        self.args_c += 1
+
+    def add_var(self, name, var_type):
+        """Add a var symbol to the class"""
+        self.symbols[name] = JackSymbol('var', var_type, self.var_c)
+        self.var_c += 1
+
+    def get_symbol(self, name):
+        """Get a symbol from within the scope of the subroutine"""
+        symbol = self.symbols.get(name)
+        if symbol is not None:
+            return symbol
+
+        return self.jack_class.get_symbol(name)

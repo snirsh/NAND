@@ -1,19 +1,29 @@
-CMDS = {'+': 'add', '-': 'sub', '&': 'and', '|': 'or', '<': 'lt', '>': 'gt', '=': 'eq', '~': 'not', '-': 'neg'}
+KINDS = {'static': 'static',
+         'field': 'this',
+         'arg': 'argument',
+         'var': 'local'}
+
 
 class VMWriter:
 
     def __init__(self, file):
         self._output_file = open(file, mode='w')
 
-    def push(self, segment, index):
+    def push(self, segment, index=None, kind=None):
+        if not kind and not index:
+            kind = segment.kind
+            index = segment.id
+            segment = KINDS[kind]
         print('push {} {}'.format(segment, index), file=self._output_file)
 
-    def pop(self, segment, index):
+    def pop(self, segment, index=None, kind=None):
+        if not index and not kind:
+            kind = segment.kind
+            index = segment.id
+            segment = KINDS[kind]
         print('pop {} {}'.format(segment, index), file=self._output_file)
 
     def write_cmd(self, command):
-        if command in CMDS.keys():
-            command = CMDS[command]
         print(command, file=self._output_file)
 
     def write_label(self, label):
@@ -33,6 +43,9 @@ class VMWriter:
 
     def write_return(self):
         print('return', file=self._output_file)
+
+    def write(self, inp):
+        print(inp, file=self._output_file)
 
     def close(self):
         self._output_file.close()

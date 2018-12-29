@@ -2,7 +2,7 @@ import glob
 import sys
 import os
 
-from CodeGenerator import *
+from CompilationEngine import *
 
 
 def main():
@@ -16,7 +16,7 @@ def main():
         input_path = glob.glob(input_path + '/*.jack')
     for _ in input_path:
         out_vm = _.replace('.jack', '.vm')
-        CodeGenerator(_)
+        CompilationEngine(_, out_vm)
 
 
 if __name__ == '__main__':
