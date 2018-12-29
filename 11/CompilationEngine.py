@@ -26,31 +26,33 @@ OP_DIC = {'+': 'add',
           '<': 'lt',
           '>': 'gt',
           '=': 'eq'}
-LABEL_FORMAT = 'Label{}'
+LABEL_FORMAT = '{}{}'
 UNARY_OP = ['-', '~']
 UNARY_DIC = {'-': 'neg',
              '~': 'not'}
-LABELS = -1
 
 
 class CompilationEngine:
+
     def __init__(self, input_path, output_path):
         """
         creates a new compilation engine with the given input and output. the next routine called must be compileClass()
         :param input_path: input stream/file
         :param output_path: output stream/file
         """
+        self.labels = 0
         self.jack_class = None
         self.class_subroutine = None
         self.tokenizer = JackTokenizer(input_path)
         self._writer = VMWriter(output_path)
         self.CompileClass()
 
-    @staticmethod
-    def label():
-        global LABELS
-        LABELS += 1
-        return LABEL_FORMAT.format(LABELS)
+    # @staticmethod
+    # def label(label):
+    #     global LABELS
+    #     label = LABEL_FORMAT.format(label, LABELS)
+    #     LABELS += 1
+    #     return label
 
     def CompileClass(self):
         """
@@ -131,7 +133,7 @@ class CompilationEngine:
             full_name = '{}.{}'.format(self.jack_class.class_name, self.class_subroutine.name)
             self._writer.write_function(full_name, self.class_subroutine.var_c)
             if kind == 'constructor':
-                fields = self.jack_class.field_c
+                fields = self.jack_class.counters[0]
                 self._writer.push('constant', str(fields))
                 self._writer.write_call('Memory.alloc', '1')
                 self._writer.pop('pointer', '0')
@@ -272,19 +274,18 @@ class CompilationEngine:
         # # _last_node = self._current_node
         # # _statement = ET.SubElement(self._current_node, 'whileStatement')
         # self._current_node = _statement
+        label_c = self.labels
         self.tokenizer.advance()  # while
         self.tokenizer.advance()  # (
         self.tokenizer.advance()
-        while_label = CompilationEngine.label()
-        false = CompilationEngine.label()
-        self._writer.write_label(while_label)
+        self._writer.write_label(LABEL_FORMAT.format('WHILE_EXP', label_c))
         self.CompileExpression()
         self.tokenizer.advance()  # )
         self.tokenizer.advance()  # {
-        self._writer.write_if(false)
+        self._writer.write_if(LABEL_FORMAT.format('WHILE_END', label_c))
         self.CompileStatements()
-        self._writer.write_goto(while_label)
-        self._writer.write_label(false)
+        self._writer.write_goto(LABEL_FORMAT.format('WHILE_END', label_c))
+        self._writer.write_label(LABEL_FORMAT.format('WHILE_EXP', label_c))
         self.tokenizer.advance()  # }
 
     def CompileReturn(self):
@@ -307,26 +308,30 @@ class CompilationEngine:
         """
         Compiles an if statement, possibly with a trailing else clause.
         """
+        label_c = self.labels
         self.tokenizer.advance()  # if
         self.tokenizer.advance()
         self.tokenizer.advance()  # (
         self.CompileExpression()
         self.tokenizer.advance()  # )
         self.tokenizer.advance()  # {
-        false = CompilationEngine.label()
-        end = CompilationEngine.label()
-        self._writer.write_if(false)
+        self._writer.write_if(LABEL_FORMAT.format('IF_TRUE', label_c))
+        self._writer.write_goto(LABEL_FORMAT.format('IF_FALSE', label_c))
+        self._writer.write_label(LABEL_FORMAT.format('IF_TRUE', label_c))
+        self.labels += 1
         self.CompileStatements()
-        self._writer.write_goto(end)
-        self._writer.write_label(false)
         self.tokenizer.advance()  # }
         peek = self.tokenizer.peek()
         if peek == 'else':
+            self._writer.write_goto(LABEL_FORMAT.format('IF_END', label_c))
+            self._writer.write_label(LABEL_FORMAT.format('IF_FALSE', label_c))
             self.tokenizer.advance()  # else
             self.tokenizer.advance()  # {
             self.CompileStatements()
             self.tokenizer.advance()  # }
-        self._writer.write_label(end)
+            self._writer.write_label(LABEL_FORMAT.format('IF_END', label_c))
+        else:
+            self._writer.write_label(LABEL_FORMAT.format('IF_FALSE', label_c))
 
     def CompileExpression(self):
         """
