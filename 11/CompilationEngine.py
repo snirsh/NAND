@@ -131,7 +131,7 @@ class CompilationEngine:
             full_name = '{}.{}'.format(self.jack_class.class_name, self.class_subroutine.name)
             self._writer.write_function(full_name, self.class_subroutine.var_c)
             if kind == 'constructor':
-                fields = self.jack_class.field_symbols
+                fields = self.jack_class.field_c
                 self._writer.push('constant', str(fields))
                 self._writer.write_call('Memory.alloc', '1')
                 self._writer.pop('pointer', '0')
