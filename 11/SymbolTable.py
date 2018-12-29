@@ -40,8 +40,8 @@ class JackSubroutine:
         if subroutine_type == 'method':
             self.add_arg('this', self.jack_class.class_name)
 
-    def add_arg(self, name, var_type):
-        self.symbols[name] = Symbol('arg', var_type, self.args_c)
+    def add_arg(self, name, arg_type):
+        self.symbols[name] = Symbol('arg', arg_type, self.args_c)
         self.args_c += 1
 
     def add_var(self, name, var_type):
