@@ -12,8 +12,6 @@ from collections import namedtuple
 
 Symbol = namedtuple('Symbol', ['kind', 'type', 'index'])
 CLASS_CHOOSER = {'field': 0, 'static': 1}
-SUBROUTINE_CHOOSER = {'arg': 0, 'var': 1}
-
 
 class JackClass:
     def __init__(self, class_name_input):
