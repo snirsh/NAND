@@ -227,6 +227,7 @@ class CompilationEngine:
         self.CompileTerm()
         self._writer.pop('temp', '0')
         self.tokenizer.advance()  # ;
+        self.tokenizer.advance()
 
     def CompileLet(self):
         """
