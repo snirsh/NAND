@@ -11,6 +11,8 @@
 from collections import namedtuple
 
 Symbol = namedtuple('Symbol', ['kind', 'type', 'index'])
+CLASS_CHOOSER = {'field': 0, 'static': 1}
+SUBROUTINE_CHOOSER = {'arg': 0, 'var': 1}
 
 
 class JackClass:
@@ -18,17 +20,14 @@ class JackClass:
 
     def __init__(self, class_name_input):
         self.class_name = class_name_input
+        self.counters = [0, 0]
+        self.static_c = self.counters[0]
+        self.field_c = self.counters[1]
         self.symbols = {}
-        self.static_c = 0
-        self.field_c = 0
 
     def add_var(self, name, var_type, kind):
-        if kind == 'field':
-            self.symbols[name] = Symbol('field', var_type, self.field_c)
-            self.field_c += 1
-        elif kind == 'static':
-            self.symbols[name] = Symbol('static', var_type, self.static_c)
-            self.static_c += 1
+        self.symbols[name] = Symbol(kind, var_type, self.counters[CLASS_CHOOSER[kind]])
+        self.counters[CLASS_CHOOSER[kind]] += 1
 
     def get_symbol(self, name):
         return self.symbols.get(name)
@@ -40,9 +39,9 @@ class JackSubroutine:
         self.jack_class = jack_class
         self.subroutine_type = subroutine_type
         self.return_type = return_type
-        self.symbols = {}
         self.args_c = 0
         self.var_c = 0
+        self.symbols = {}
         if subroutine_type == 'method':
             self.add_arg('this', self.jack_class.class_name)
 
