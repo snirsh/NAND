@@ -16,8 +16,6 @@ SUBROUTINE_CHOOSER = {'arg': 0, 'var': 1}
 
 
 class JackClass:
-    """A Jack class representation for the Jack compiler"""
-
     def __init__(self, class_name_input):
         self.class_name = class_name_input
         self.counters = [0, 0]
