@@ -47,36 +47,17 @@ class CompilationEngine:
         self._writer = VMWriter(output_path)
         self.CompileClass()
 
-    # @staticmethod
-    # def label(label):
-    #     global LABELS
-    #     label = LABEL_FORMAT.format(label, LABELS)
-    #     LABELS += 1
-    #     return label
-
     def CompileClass(self):
         """
         Compiles a complete class.
         """
-        # self._root = ET.Element('class')
         self.tokenizer.advance()
-        # self._write_line(self._root, self.tokenizer.keyWord())
         self.tokenizer.advance()
         self.jack_class = JackClass(self.tokenizer.current_token)
         self.tokenizer.advance()
-        # self._write_line(self._root, self.tokenizer.symbol())
         self.CompileClassVarDec()
         self.CompileSubroutine()
         self.tokenizer.advance()
-        # self._write_line(self._root, self.tokenizer.symbol())
-
-    def _write_line(self, node, name):
-        """
-        writes the current node to the output file
-        :param name: the name of the node
-        """
-        _ = ET.SubElement(node, TYPES[self.tokenizer.tokenType()])
-        _.text = ' ' + name + ' '
 
     def CompileClassVarDec(self):
         """
@@ -93,23 +74,16 @@ class CompilationEngine:
             self.tokenizer.advance()
             self.jack_class.add_var(name, type, kind)
             while self.tokenizer.symbol() == ',':
-                # self._write_line(_classVarNode, self.tokenizer.symbol())  # ,
                 self.tokenizer.advance()
                 name = self.tokenizer.identifier()
                 self.tokenizer.advance()
                 self.jack_class.add_var(name, type, kind)
-            # self._write_line(_classVarNode, self.tokenizer.symbol())  # ;
             peek = self.tokenizer.peek()
-            # if 'static' in peek or 'field' in peek:
-            #     _classVarNode = ET.SubElement(self._root, 'classVarDec')
 
     def CompileSubroutine(self):
         """
         Compiles a complete method, function, or constructor.
         """
-        # _last_node = self._current_node
-        # _subroutineNode = ET.SubElement(self._root, 'subroutineDec')
-        # self._current_node = _subroutineNode
         peek = self.tokenizer.peek()
         while 'function' in peek or 'constructor' in peek or 'method' in peek:
             self.tokenizer.advance()
@@ -120,13 +94,9 @@ class CompilationEngine:
             name = self.tokenizer.identifier()  # name
             self.tokenizer.advance()
             self.class_subroutine = JackSubroutine(name, kind, type, self.jack_class)
-            # self._write_line(_subroutineNode, self.tokenizer.symbol())  # '('
             self.CompileParameterList()
             self.tokenizer.advance()
-            # self._write_line(_subroutineNode, self.tokenizer.symbol())  # ')'
             self.tokenizer.advance()
-            # self._current_node = ET.SubElement(_subroutineNode, 'subroutineBody')
-            # self._write_line(self._current_node, self.tokenizer.symbol())  # '{'
             peek = self.tokenizer.peek()
             if 'var' in peek:
                 self.CompileVarDec()
@@ -142,17 +112,12 @@ class CompilationEngine:
                 self._writer.pop('pointer', '0')
             self.CompileStatements()
             self.tokenizer.advance()
-            # self._write_line(self._current_node, self.tokenizer.symbol())  # '}'
             peek = self.tokenizer.peek()
-            # if 'function' in peek or 'constructor' in peek or 'method' in peek:
-            #     _subroutineNode = ET.SubElement(self._root, 'subroutineDec')
-            #     self._current_node = _subroutineNode
 
     def CompileParameterList(self):
         """
         Compiles a (possibly empty) parameter list, not including the enclosing ()
         """
-        # param_list = ET.SubElement(self._current_node, 'parameterList')
         peek = self.tokenizer.peek()
         if peek != ')':
             self.tokenizer.advance()
@@ -163,25 +128,20 @@ class CompilationEngine:
             self.class_subroutine.add_arg(name, type)
         while peek == ',':
             self.tokenizer.advance()
-            # self._write_line(param_list, self.tokenizer.symbol())  # ','
             self.tokenizer.advance()
             type = self.tokenizer.keyWord()  # type
             self.tokenizer.advance()
             name = self.tokenizer.identifier()  # name
             self.class_subroutine.add_arg(name, type)
             peek = self.tokenizer.peek()
-        # if not param_list.text:
-        #     param_list.text = '\n'
 
     def CompileVarDec(self):
         """
         Compiles a var declaration.
         """
-        # _varDecNode = ET.SubElement(self._current_node, 'varDec')
         peek = self.tokenizer.peek()
         while 'var' in peek:
             self.tokenizer.advance()
-            # self._write_line(_varDecNode, self.tokenizer.keyWord())
             self.tokenizer.advance()
             type = self.tokenizer.keyWord()
             self.tokenizer.advance()
@@ -189,23 +149,17 @@ class CompilationEngine:
             self.class_subroutine.add_var(name, type)
             self.tokenizer.advance()
             while self.tokenizer.symbol() == ',':
-                # self._write_line(_varDecNode, self.tokenizer.symbol())  # ,
                 self.tokenizer.advance()
                 name = self.tokenizer.identifier()  # name
                 self.class_subroutine.add_var(name, type)
                 self.tokenizer.advance()
-            # self._write_line(_varDecNode, self.tokenizer.symbol())  # ;
             peek = self.tokenizer.peek()
-            # if peek == 'var':
-            #     _varDecNode = ET.SubElement(self._current_node, 'varDec')
 
     def CompileStatements(self):
         """
         Compiles a sequence of statements, not including the enclosing "{}"
         """
         peek = self.tokenizer.peek()
-        # _parent = self._current_node
-        # self._current_node = ET.SubElement(self._current_node, 'statements')
         while 'let' in peek or 'if' in peek or 'while' in peek or 'do' in peek or 'return' in peek:
             if 'let' in peek:
                 self.CompileLet()
@@ -218,7 +172,6 @@ class CompilationEngine:
             elif 'return' in peek:
                 self.CompileReturn()
             peek = self.tokenizer.peek()
-        # self._current_node = _parent
 
     def CompileDo(self):
         """
@@ -236,11 +189,7 @@ class CompilationEngine:
         """
         Compiles a let statement.
         """
-        # _last_node = self._current_node
-        # _statement = ET.SubElement(self._current_node, 'letStatement')
-        # self._current_node = _statement
         self.tokenizer.advance()  # let
-        # self._write_line(_statement, self.tokenizer.keyWord())
         self.tokenizer.advance()
         name = self.tokenizer.identifier()
         symbol = self.class_subroutine.get_symbol(name)
@@ -250,7 +199,6 @@ class CompilationEngine:
             self.tokenizer.advance()
             self.CompileExpression()
             self.tokenizer.advance()  # ]
-            # self._write_line(_statement, self.tokenizer.symbol())  # ']'
             self.tokenizer.advance()  # =
             self._writer.push(symbol)
             self._writer.write_cmd('add')
@@ -271,9 +219,6 @@ class CompilationEngine:
         """
         Compiles a while statement.
         """
-        # # _last_node = self._current_node
-        # # _statement = ET.SubElement(self._current_node, 'whileStatement')
-        # self._current_node = _statement
         label_c = self.labels
         self.tokenizer.advance()  # while
         self.tokenizer.advance()  # (
@@ -302,7 +247,6 @@ class CompilationEngine:
             self._writer.push('constant', '0')
             self.tokenizer.advance()
         self._writer.write_return()
-        # self._write_line(self._current_node, self.tokenizer.symbol())  # ';'
 
     def CompileIf(self):
         """
