@@ -128,6 +128,16 @@ class CompilationEngine:
             peek = self.tokenizer.peek()
             if 'var' in peek:
                 self.CompileVarDec()
+            full_name = '{}.{}'.format(self.jack_class.class_name, self.class_subroutine.name)
+            self._writer.write_function(full_name, self.class_subroutine.var_c)
+            if kind == 'constructor':
+                fields = self.jack_class.field_symbols
+                self._writer.push('constant', str(fields))
+                self._writer.write_call('Memory alloc ', '1')
+                self._writer.pop('pointer', '0')
+            elif kind == 'method':
+                self._writer.push('argument', '0')
+                self._writer.pop('pointer', '0')
             self.CompileStatements()
             self.tokenizer.advance()
             # self._write_line(self._current_node, self.tokenizer.symbol())  # '}'
