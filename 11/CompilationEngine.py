@@ -133,7 +133,7 @@ class CompilationEngine:
             if kind == 'constructor':
                 fields = self.jack_class.field_symbols
                 self._writer.push('constant', str(fields))
-                self._writer.write_call('Memory alloc ', '1')
+                self._writer.write_call('Memory.alloc', '1')
                 self._writer.pop('pointer', '0')
             elif kind == 'method':
                 self._writer.push('argument', '0')
@@ -227,7 +227,8 @@ class CompilationEngine:
         self.CompileTerm()
         self._writer.pop('temp', '0')
         self.tokenizer.advance()  # ;
-        self.tokenizer.advance()
+        if self.tokenizer.current_token != ';':
+            self.tokenizer.advance()
 
     def CompileLet(self):
         """
@@ -253,11 +254,10 @@ class CompilationEngine:
             self._writer.write_cmd('add')
             self.tokenizer.advance()
             self.CompileExpression()
-            self._writer.pop('temp', 0)
-            self._writer.pop('pointer', 1)
-            self._writer.push('temp', 0)
-            self._writer.pop('that', 0)
-            self.tokenizer.advance()
+            self._writer.pop('temp', '0')
+            self._writer.pop('pointer', '1')
+            self._writer.push('temp', '0')
+            self._writer.pop('that', '0')
         else:
             self.tokenizer.advance()  # =
             self.tokenizer.advance()
@@ -363,10 +363,10 @@ class CompilationEngine:
         elif self.tokenizer.tokenType() == 'STRING_CONST':
             str = self.tokenizer.stringVal()
             self._writer.push('constant', len(str))
-            self._writer.write_call('String new ', '1')
+            self._writer.write_call('String.new', '1')
             for char in str:
-                self._writer.push('constant', str(ord(char)))
-                self._writer.write_call('String appendChar ', '2')
+                self._writer.push('constant', ord(char))
+                self._writer.write_call('String.appendChar', '2')
         elif self.tokenizer.tokenType() == 'KEYWORD':
             if self.tokenizer.current_token == 'this':
                 self._writer.push('pointer', '0')

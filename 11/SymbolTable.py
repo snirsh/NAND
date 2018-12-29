@@ -10,7 +10,7 @@
 
 from collections import namedtuple
 
-Symbol = namedtuple('Symbol', ['kind', 'type', 'id'])
+Symbol = namedtuple('Symbol', ['kind', 'type', 'index'])
 
 
 class JackClass:

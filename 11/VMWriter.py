@@ -12,14 +12,14 @@ class VMWriter:
     def push(self, segment, index=None, kind=None):
         if not kind and not index:
             kind = segment.kind
-            index = segment.id
+            index = segment.index
             segment = KINDS[kind]
         print('push {} {}'.format(segment, index), file=self._output_file)
 
     def pop(self, segment, index=None, kind=None):
         if not index and not kind:
             kind = segment.kind
-            index = segment.id
+            index = segment.index
             segment = KINDS[kind]
         print('pop {} {}'.format(segment, index), file=self._output_file)
 
