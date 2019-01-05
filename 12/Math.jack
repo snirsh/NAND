@@ -8,13 +8,29 @@
  * Note: Jack compilers implement multiplication and division using OS method calls.
  */
 class Math {
+    static int twoToThe;
 
     /** Initializes the library. */
     function void init() {
+        var int i;
+        var int value;
+        let i = 0;
+        let value = 1;
+        let twoToThe = Array.new(16);
+        while(i<16){
+            let twoToThe[i] = value;
+            let value = value + value;
+            let i = i+1;
+        }
+        return;
     }
 
     /** Returns the absolute value of x. */
     function int abs(int x) {
+        if (x<0){
+            return -x;
+        }
+        return x;
     }
 
     /** Returns the product of x and y. 
@@ -23,6 +39,18 @@ class Math {
      *  the Jack expressions x*y and multiply(x,y) return the same value.
      */
     function int multiply(int x, int y) {
+        var prod, shifted, i;
+        let prod = 0;
+        let shifted = x;
+        let i = 0;
+        while (i<16) {
+            if (twoToThe[i] & y = twoToThe[i]){
+                let prod = prod + shifted;
+            }
+            let shifted = shifted + shifted;
+            let i = i+1;
+            }
+        return prod;
     }
 
     /** Returns the integer part of x/y.
@@ -31,17 +59,54 @@ class Math {
      *  the Jack expressions x/y and divide(x,y) return the same value.
      */
     function int divide(int x, int y) {
+        var int abx, aby, q, res;
+        let abx = Math.abs(x);
+        let aby = Math.abs(y);
+        if (abx < aby){
+            return 0;
+        }
+        let q = Math.divide(abx,aby + aby);
+        if ((abx - (2*q*aby)) < aby){
+            let res = q+q;
+        }
+        else{
+            let res = q+q+1;
+        }
+        if((x<0)=(y<0)){
+            return res;
+        }
+        return -res;
     }
 
     /** Returns the integer part of the square root of x. */
     function int sqrt(int x) {
+        var int y, i, temp, sqtemp;
+        let y = 0;
+        let i = 7;
+        while (~(i<0)){
+            let temp = y+twoToThe[i];
+            let sqtemp = temp * temp;
+            if (~(sqtemp > x) & (sqtemp > 0)) {
+                let y = temp;
+            }
+            let i = i - 1;
+        }
+        return y;
     }
 
     /** Returns the greater number. */
     function int max(int a, int b) {
+        if(a<b){
+            return b;
+        }
+        return a;
     }
 
     /** Returns the smaller number. */
     function int min(int a, int b) {
+        if(a>b){
+                return b;
+            }
+            return a;
     }
 }
