@@ -40,16 +40,16 @@ class Memory {
      *  a reference to its base address. */
     function int alloc(int size) {
         var Array segment = freed;
-        while(currentSegment[len] < (size + 1)){
+        while(currentSegment[len] < (size + 2)){
             if(currSegment[next]=null){
                 return null;
             }
             let segment = segment[next];
         }
-        let segment[len] = segment[len] - (size+1);
+        let segment[len] = segment[len] - (size+2);
         let segment = segment +segment[len];
-        let segment[len] = size + 1;
-        return segment + 1;
+        let segment[len] = size + 2;
+        return segment + 2;
     }
 
     /** De-allocates the given object (cast as an array) by making
