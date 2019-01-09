@@ -109,4 +109,10 @@ class Math {
             }
             return a;
     }
+
+    function int mod(int num, int modulo){
+        return num&(modulo-1);
+    }
+
+
 }

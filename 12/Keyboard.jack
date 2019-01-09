@@ -38,7 +38,8 @@ class Keyboard {
         return keyboard[0];
     }
 
-    /**								
+ var int retInt;
+   /**
      * Waits until a key is pressed on the keyboard and released,
      * then echoes the key to the screen, and returns the character 
      * of the pressed key.
@@ -51,7 +52,9 @@ class Keyboard {
         while(Keyboard.keyPressed() = pressed) {
 
         }
-        do Output.printChar(pressed);
+        if((~(pressed=128))|(~(pressed=129)){
+            do Output.printChar(pressed);
+        }
         return pressed;
     }
 
@@ -62,18 +65,19 @@ class Keyboard {
      */
     function String readLine(String message) {
         var String line;
-        var int ch;
+        var char c;
         do Output.printString(message);
-        let line = String.new(256);
-        let ch = Keyboard.readChar();
-        while (~(ch = String.newLine())) {
-            if(ch = String.backSpace()) {
+        let line = String.new(64);
+        let c = Keyboard.readChar();
+        while (true) {
+            let c = Keyboard.readChar();
+            if((c = 129)&(line.length()>0)) {
                 do line.eraseLastChar();
+                do Output.backSpace();
             }
-            else {
+            if((c>31)&(c<127)){
                 do line.AppendChar(ch);
             }
-            let ch = Keyboard.readChar();
         }
         return line;
     }   
@@ -86,7 +90,7 @@ class Keyboard {
      */
     function int readInt(String message) {
         var String intLine;
-        let intLine = Keyboard.readLine(message);
+        let intLine = Keyboard.readLine(message)
         return intLine.intValue();
     }
 }

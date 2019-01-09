@@ -11,7 +11,7 @@
 class Memory {
     static Array ram;
     static Array freed;
-    static int next, len, block;
+    static int next, len;
 
     /** Initializes the class. */
     function void init() {
@@ -19,9 +19,8 @@ class Memory {
         let freed = 2048;
         let len = 0;
         let next = 1;
-        let bloack = 3;
         let freed[next]=null;
-        let freed[len]=14336;
+        let freed[len]=14335;
         return;
     }
 
